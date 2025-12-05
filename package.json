@@ -1,0 +1,43 @@
+{
+  "name": "collaborative-agentic-platform",
+  "version": "1.0.0",
+  "description": "Collaborative Agentic Platform - Multi-agent development automation",
+  "scripts": {
+    "setup": "bun run install:all && bun run db:setup && bun run start:docker",
+    "install:all": "bun run install:ts-backend && bun run install:connector && bun run install:deployment && bun run install:frontend",
+    "install:ts-backend": "cd backend-typescript && bun install",
+    "install:connector": "cd connector-service && bun install",
+    "install:deployment": "cd deployment-service && bun install",
+    "install:frontend": "cd frontend && bun install",
+    "db:setup": "bun run db:generate && bun run db:push",
+    "db:generate": "cd backend-typescript && bun run db:generate",
+    "db:push": "cd backend-typescript && bun run db:push",
+    "db:migrate": "cd backend-typescript && bun run db:migrate",
+    "db:studio": "cd backend-typescript && bun run db:studio",
+    "lint": "bun run lint:ts-backend && bun run lint:connector && bun run lint:deployment && bun run lint:frontend",
+    "lint:ts-backend": "cd backend-typescript && bun run lint",
+    "lint:connector": "cd connector-service && bun run lint",
+    "lint:deployment": "cd deployment-service && bun run lint",
+    "lint:frontend": "cd frontend && bun run lint",
+    "lint:fix": "bun run lint:fix:ts-backend && bun run lint:fix:connector && bun run lint:fix:deployment && bun run lint:fix:frontend",
+    "lint:fix:ts-backend": "cd backend-typescript && bun run lint:fix",
+    "lint:fix:connector": "cd connector-service && bun run lint:fix",
+    "lint:fix:deployment": "cd deployment-service && bun run lint:fix",
+    "lint:fix:frontend": "cd frontend && bun run lint:fix",
+    "start": "bun run start:docker && bun run start:services",
+    "start:docker": "docker-compose up -d postgres redis",
+    "start:services": "bunx concurrently --raw --names \"TS-BACKEND,CONNECTOR,DEPLOY,FRONTEND\" --prefix-colors \"blue,yellow,magenta,cyan\" --kill-others-on-fail --restart-tries 0 \"bun run start:ts-backend\" \"bun run start:connector\" \"bun run start:deployment\" \"bun run start:frontend\"",
+    "start:ts-backend": "cd backend-typescript && PORT=3000 bun src/index.ts",
+    "start:connector": "cd connector-service && PORT=3001 bun src/index.ts",
+    "start:deployment": "cd deployment-service && PORT=3002 bun src/index.ts",
+    "start:frontend": "cd frontend && bun run dev",
+    "stop": "docker-compose down && pkill -f 'bun.*src/index.ts' && pkill -f 'vite'",
+    "clean": "rm -rf node_modules backend-typescript/node_modules connector-service/node_modules deployment-service/node_modules frontend/node_modules logs/*.log",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\" --ignore-path .prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\" --ignore-path .prettierignore"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "prettier": "^3.7.4"
+  }
+}
