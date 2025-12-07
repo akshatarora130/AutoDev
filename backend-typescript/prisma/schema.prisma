@@ -6,3 +6,16 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id             String   @id @default(uuid())
+  username       String   @unique
+  githubId       String   @unique
+  email          String?
+  avatarUrl      String?
+  githubToken    String?  // Encrypted GitHub access token
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("users")
+}

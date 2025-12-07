@@ -2,11 +2,85 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    /* Premium Deep Space Backgrounds (Carbon Theme) */
+    --background: #0f0f0f; /* Carbon Black */
+    --surface: #1a1a1a; /* Graphite Surface */
+    --surface-hover: rgba(45, 45, 45, 0.8);
+    --border: rgba(255, 255, 255, 0.1);
+
+    /* Premium Accents */
+    --accent-primary: #8b5cf6; /* Electric Violet */
+    --accent-primary-hover: #7c3aed; /* Violet 600 */
+    --accent-secondary: #f59e0b; /* Electric Amber/Gold */
+    --accent-tertiary: #10b981; /* Emerald Green */
+    --accent-link: #3b82f6; /* Blue 500 */
+    --glow-primary: rgba(139, 92, 246, 0.5); /* Violet Glow */
+
+    /* Text */
+    --text-primary: #f8fafc; /* Slate 50 */
+    --text-secondary: #cbd5e1; /* Slate 300 */
+    --text-muted: #94a3b8; /* Slate 400 */
+
+    /* Functional */
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+  }
+}
+
 body {
-  margin: 0;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
-    "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  @apply bg-background text-white overflow-x-hidden;
+  font-family: "Inter", system-ui, sans-serif;
+  background-image:
+    radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.15), transparent 40%),
+    radial-gradient(circle at 0% 50%, rgba(245, 158, 11, 0.08), transparent 40%);
+  background-attachment: fixed;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+::-webkit-scrollbar-thumb {
+  background: #262626;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
+
+/* Utilities */
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-md bg-white/5 border border-white/10;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-xl bg-slate-900/40 border border-slate-700/50 shadow-xl;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px var(--glow-primary);
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
 }

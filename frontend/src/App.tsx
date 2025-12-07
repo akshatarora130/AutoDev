@@ -1,13 +1,24 @@
-import { useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HomePage } from "./pages/home";
+import { LoginPage } from "./pages/login";
+import { DashboardPage } from "./pages/dashboard";
+import { ProtectedRoute } from "./components/common/ProtectedRoute";
 
 export function App() {
-  const [count, setCount] = useState(0);
-
   return (
-    <div style={{ padding: "2rem", fontFamily: "system-ui" }}>
-      <h1>Frontend App</h1>
-      <p>Base React application</p>
-      <button onClick={() => setCount(count + 1)}>Count: {count}</button>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
   );
 }
