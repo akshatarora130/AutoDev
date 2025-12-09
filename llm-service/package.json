@@ -1,19 +1,21 @@
 {
-  "name": "connector-service",
+  "name": "llm-service",
   "version": "1.0.0",
-  "description": "Integration connector service (supports Azure DevOps, Jira, etc.)",
+  "description": "LLM service for Collaborative Agentic Platform",
   "type": "module",
   "scripts": {
-    "dev": "PORT=3001 bun run src/index.ts",
+    "dev": "PORT=3003 bun run src/index.ts",
     "build": "bun build src/index.ts --outdir ./dist",
-    "start": "PORT=3001 bun run dist/index.js",
+    "start": "PORT=3003 bun run dist/index.js",
     "lint": "eslint src --ext .ts && tsc --noEmit",
     "lint:fix": "eslint src --ext .ts --fix"
   },
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "@aws-sdk/client-s3": "^3.490.0",
+    "@aws-sdk/client-ec2": "^3.490.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.5",

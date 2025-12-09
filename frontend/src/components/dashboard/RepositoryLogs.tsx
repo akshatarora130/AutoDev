@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { GitBranch, GitCommit, Clock, FileText } from "lucide-react";
 import { Loader } from "../common/Loader";
+import { Select } from "../common/Select";
 import { githubApi } from "../../utils/api";
 import type { Repository, Commit, Branch } from "../../types";
 
@@ -92,17 +93,16 @@ export const RepositoryLogs = ({ repo }: RepositoryLogsProps) => {
 
         {activeTab === "commits" && (
           <div className="ml-auto flex items-center gap-2">
-            <select
+            <Select
               value={selectedBranch}
               onChange={(e) => setSelectedBranch(e.target.value)}
-              className="px-3 py-1.5 bg-background border border-white/10 rounded-md text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-accent-primary"
-            >
-              {branches.map((branch) => (
-                <option key={branch.name} value={branch.name}>
-                  {branch.name}
-                </option>
-              ))}
-            </select>
+              options={branches.map((branch) => ({
+                value: branch.name,
+                label: branch.name,
+              }))}
+              size="sm"
+              className="w-48"
+            />
           </div>
         )}
       </div>

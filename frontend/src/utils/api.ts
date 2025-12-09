@@ -6,6 +6,12 @@ import type {
   CreateRepoParams,
   CommitParams,
   RepoTreeResponse,
+  Project,
+  File,
+  Story,
+  CreateProjectParams,
+  ImportProjectParams,
+  CreateStoryParams,
 } from "../types";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
@@ -87,6 +93,67 @@ export const githubApi = {
     if (branch) params.append("branch", branch);
     if (recursive) params.append("recursive", "1");
     const response = await api.get(`/api/github/repos/${owner}/${repo}/tree?${params.toString()}`);
+    return response.data;
+  },
+};
+
+export const projectApi = {
+  create: async (params: CreateProjectParams): Promise<Project> => {
+    const response = await api.post("/api/projects", params);
+    return response.data;
+  },
+  import: async (params: ImportProjectParams): Promise<Project> => {
+    const response = await api.post("/api/projects/import", params);
+    return response.data;
+  },
+  list: async (): Promise<Project[]> => {
+    const response = await api.get("/api/projects");
+    return response.data;
+  },
+  get: async (id: string): Promise<Project> => {
+    const response = await api.get(`/api/projects/${id}`);
+    return response.data;
+  },
+  getFiles: async (id: string): Promise<File[]> => {
+    const response = await api.get(`/api/projects/${id}/files`);
+    return response.data;
+  },
+  getFileTree: async (id: string): Promise<any> => {
+    const response = await api.get(`/api/projects/${id}/tree`);
+    return response.data;
+  },
+  getFile: async (id: string, path: string): Promise<File> => {
+    const response = await api.get(`/api/projects/${id}/files/${path}`);
+    return response.data;
+  },
+  updateFile: async (id: string, path: string, content: string): Promise<File> => {
+    const response = await api.put(`/api/projects/${id}/files/${path}`, { content });
+    return response.data;
+  },
+};
+
+export const storyApi = {
+  create: async (projectId: string, params: CreateStoryParams): Promise<Story> => {
+    const response = await api.post(`/api/projects/${projectId}/stories`, params);
+    return response.data;
+  },
+  list: async (projectId: string): Promise<Story[]> => {
+    const response = await api.get(`/api/projects/${projectId}/stories`);
+    return response.data;
+  },
+  get: async (projectId: string, id: string): Promise<Story> => {
+    const response = await api.get(`/api/projects/${projectId}/stories/${id}`);
+    return response.data;
+  },
+  update: async (projectId: string, id: string, data: Partial<Story>): Promise<Story> => {
+    const response = await api.put(`/api/projects/${projectId}/stories/${id}`, data);
+    return response.data;
+  },
+  delete: async (projectId: string, id: string): Promise<void> => {
+    await api.delete(`/api/projects/${projectId}/stories/${id}`);
+  },
+  process: async (projectId: string, id: string): Promise<{ message: string; storyId: string }> => {
+    const response = await api.post(`/api/projects/${projectId}/stories/${id}/process`);
     return response.data;
   },
 };

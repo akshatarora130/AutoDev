@@ -17,3 +17,5 @@ export interface GitHubProfile {
   emails?: Array<{ value: string }>;
   photos?: Array<{ value: string }>;
 }
+
+export * from "./project";

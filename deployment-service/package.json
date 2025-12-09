@@ -4,9 +4,9 @@
   "description": "Deployment service for Collaborative Agentic Platform",
   "type": "module",
   "scripts": {
-    "dev": "bun run src/index.ts",
+    "dev": "PORT=3002 bun run src/index.ts",
     "build": "bun build src/index.ts --outdir ./dist",
-    "start": "bun run dist/index.js",
+    "start": "PORT=3002 bun run dist/index.js",
     "lint": "eslint src --ext .ts && tsc --noEmit",
     "lint:fix": "eslint src --ext .ts --fix"
   },

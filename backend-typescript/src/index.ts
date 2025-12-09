@@ -5,6 +5,8 @@ import cookieParser from "cookie-parser";
 import passport from "./config/passport.js";
 import authRoutes from "./routes/auth.js";
 import githubRoutes from "./routes/github.js";
+import projectRoutes from "./routes/projects.js";
+import storyRoutes from "./routes/stories.js";
 
 const app = express();
 
@@ -45,6 +47,8 @@ app.get("/health", (_req: Request, res: Response) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/github", githubRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/projects", storyRoutes);
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 

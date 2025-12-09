@@ -4,9 +4,9 @@
   "description": "TypeScript backend for Collaborative Agentic Platform",
   "type": "module",
   "scripts": {
-    "dev": "bun run src/index.ts",
+    "dev": "PORT=3000 bun run src/index.ts",
     "build": "bun build src/index.ts --outdir ./dist",
-    "start": "bun run dist/index.js",
+    "start": "PORT=3000 bun run dist/index.js",
     "db:generate": "dotenv -e ../.env -- prisma generate",
     "db:push": "dotenv -e ../.env -- prisma db push",
     "db:migrate": "dotenv -e ../.env -- prisma migrate dev",

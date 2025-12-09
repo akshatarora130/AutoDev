@@ -1,34 +1,28 @@
-import { Book, Lock } from "lucide-react";
+import { Github, Folder } from "lucide-react";
 import { cn } from "../../utils/cn";
-import type { Repository } from "../../types";
+import type { Project } from "../../types";
 
 interface RepoListItemProps {
-  repo: Repository;
+  repo: Project;
   onClick?: () => void;
 }
 
 export const RepoListItem = ({ repo, onClick }: RepoListItemProps) => {
+  const Icon = repo.source === "github" ? Github : Folder;
+
   return (
     <div
       className="group flex items-center gap-2.5 px-3 py-2 rounded-md hover:bg-white/5 cursor-pointer transition-colors"
       onClick={onClick}
     >
-      {repo.owner?.avatar_url ? (
-        <img
-          src={repo.owner.avatar_url}
-          alt={repo.owner.login}
-          className="w-5 h-5 rounded-full shrink-0 border border-white/10"
-        />
-      ) : (
-        <Book
+      <Icon
           className={cn(
             "w-4 h-4 shrink-0 transition-colors",
-            repo.private
-              ? "text-accent-secondary"
+          repo.source === "github"
+            ? "text-text-muted group-hover:text-accent-primary"
               : "text-text-muted group-hover:text-text-secondary"
           )}
         />
-      )}
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">
@@ -36,9 +30,10 @@ export const RepoListItem = ({ repo, onClick }: RepoListItemProps) => {
             {repo.name}
           </span>
         </div>
+        {repo.description && (
+          <p className="text-xs text-text-muted truncate mt-0.5">{repo.description}</p>
+        )}
       </div>
-
-      {repo.private && <Lock className="w-3 h-3 text-text-muted/40" />}
     </div>
   );
 };
