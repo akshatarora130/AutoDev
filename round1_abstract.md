@@ -38,6 +38,12 @@ Our Collaborative Agentic Platform uses a **multi-agent orchestration architectu
 
 All agents communicate through a **centralized Event Bus** (Redis Pub/Sub). Agents publish events (e.g., "tasks_created", "code_approved") and subscribe to relevant topics. The Orchestrator manages a story-level queue for sequential story processing (one story at a time) and task-level queues enabling parallel processing of independent tasks within each story while respecting dependencies.
 
+### Story Isolation & Redis Scope (New)
+- After subdivision, the orchestrator **selects one story at a time** for execution.
+- Redis tracks **only the active story and its subtasks** to minimize contention and simplify recovery.
+- Subtasks within the active story run in parallel where dependencies allow; the next story is loaded only after all subtasks pass code review and tests.
+- When Redis is empty, the orchestrator pulls all stories from the database, sorts by priority, and if multiple stories share the same priority, an LLM tie-breaker chooses the next story based on downstream dependencies and impact.
+
 ---
 
 ## Mandatory Workflow Diagram
@@ -58,12 +64,11 @@ All agents communicate through a **centralized Event Bus** (Redis Pub/Sub). Agen
                                |
                                v
 +--------------------------- PHASE 1 --------------------------------+
-|                    TASK DIVISION & RANKING                         |
+|            TASK DIVISION & RANKING (ALL STORIES)                   |
 |                                                                    |
 |  Task Divider Agent                                                |
 |    -> Divide ALL stories into small tasks                          |
-|    -> Rank order of execution for all tasks                        |
-|       (e.g., FE, BE, DB, Auth, Tests, etc.)                        |
+|    -> Prepare per-story dependency graph                           |
 +------------------------------+-------------------------------------+
                                |
 +--------------------------- PHASE 2 --------------------------------+
@@ -72,20 +77,23 @@ All agents communicate through a **centralized Event Bus** (Redis Pub/Sub). Agen
 |  Task Reviewer Agent (recursive)                                   |
 |    -> Review all tasks                                             |
 |    -> Validate subtasks                                            |
-|    -> Break down any complex task further                          |
-|       until "implementable" units                                  |
+|    -> Break down complex tasks until implementable                 |
 +------------------------------+-------------------------------------+
                                |
-
 +------------------------------+-------------------------------------+
-|                    TASK QUEUE (RANKED ORDER)                       |
-|   [ Task 1 (P1) ] --> [ Task 2 (P2) ] --> [ Task 3 (P3) ] ...      |
+|                     STORY QUEUE (ONE AT A TIME)                    |
+|   [ Story 1 ] --> [ Story 2 ] --> [ Story 3 ] ...                  |
 +------------------------------+-------------------------------------+
                                |
-                         pick current task
+                  pick current story (Redis holds                    |
+                    only this story + its subtasks)                  |
                                |
 +--------------------------- PHASE 3 --------------------------------+
-|                       CODE GENERATION (PARALLEL)                   |
+|           PER-STORY TASK PRIORITIZATION & CODE GEN                 |
+|                                                                    |
+|  Task Prioritizer (per-story queue)                                |
+|    -> Order subtasks by dependency                                 |
+|    -> Parallelize independent subtasks                             |
 |                                                                    |
 |    +----------------+    +----------------+    +----------------+  |
 |    | Frontend       |    | Backend        |    | Database       |  |
@@ -112,12 +120,10 @@ All agents communicate through a **centralized Event Bus** (Redis Pub/Sub). Agen
 |                            TESTING                                 |
 |                                                                    |
 |  Test Generator Agent                                              |
-|    -> Generate unit tests                                          |
-|    -> Generate integration tests                                   |
-|    -> Generate E2E tests                                           |
+|    -> Generate unit, integration, and E2E tests                    |
 |                                                                    |
 |  Test Reviewer & Executor Agent                                    |
-|    -> Review test coverage and relevance                           |
+|    -> Review coverage and relevance                                |
 |    -> Execute tests in isolated Docker environment                 |
 |    -> Collect results & coverage metrics                           |
 |                                                                    |
@@ -133,18 +139,18 @@ All agents communicate through a **centralized Event Bus** (Redis Pub/Sub). Agen
 |                                                                    |
 |  - Merge validated modules (FE, BE, DB)                            |
 |  - Run final integration tests                                     |
-|  - Deploy to staging (AWS)                                          |
+|  - Deploy to staging (AWS)                                         |
 |  - Provision managed Postgres (Supabase / Neon)                    |
 |  - Generate Live Preview URL                                       |
 |  - Update dashboard with status, logs, test reports                |
 +------------------------------+-------------------------------------+
                                |
 +------------------------------+-------------------------------------+
-|                        TASK COMPLETE ✓                             |
+|                        STORY COMPLETE ✓                            |
 +------------------------------+-------------------------------------+
                                |
 +------------------------------+-------------------------------------+
-|              Next Task in Queue (Execute One by One)               |
+|                 Next Story in Queue (One at a Time)                |
 +------------------------------+-------------------------------------+
                                |
 +------------------------------+-------------------------------------+
@@ -156,7 +162,7 @@ All agents communicate through a **centralized Event Bus** (Redis Pub/Sub). Agen
 +--------------------------------------------------------------------+
 ```
 
-**Flow**: ADO Input → ADO Connector & Parser → Task Division & Ranking (All Stories) → Task Review → Task Execution (One by One) → Code Generation → Code Review → Test Generation & Execution → Integration & Deployment → Dashboard
+**Flow**: ADO Input → ADO Connector & Parser → Task Division & Ranking (All Stories) → Task Review → **If Redis empty: fetch all stories from DB, sort by priority; LLM tie-breaker on same-priority stories using dependency impact** → Select one story; Redis scoped to that story + subtasks → Per-story Task Prioritization & Parallel Code Gen → Code Review → Test Generation & Execution → Integration & Deployment → Dashboard → Next Story
 
 ---
 
