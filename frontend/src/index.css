@@ -54,6 +54,18 @@ body {
   background: #404040;
 }
 
+/* Custom scrollbar for smaller containers */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+}
+
 /* Utilities */
 @layer utilities {
   .glass {
@@ -71,6 +83,19 @@ body {
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s linear infinite;
+    background-size: 200% 100%;
+  }
+
+  .animate-processing {
+    animation: processing-pulse 1.5s ease-in-out infinite;
+  }
 }
 
 @keyframes float {
@@ -83,4 +108,69 @@ body {
   100% {
     transform: translateY(0px);
   }
+}
+
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.5;
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes processing-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+/* Pipeline Status Colors */
+.status-pending {
+  --status-color: 148 163 184;
+}
+.status-dividing {
+  --status-color: 167 139 250;
+}
+.status-reviewing {
+  --status-color: 96 165 250;
+}
+.status-tasks-ready {
+  --status-color: 34 211 238;
+}
+.status-generating {
+  --status-color: 251 191 36;
+}
+.status-code-review {
+  --status-color: 251 146 60;
+}
+.status-testing {
+  --status-color: 244 114 182;
+}
+.status-deploying {
+  --status-color: 52 211 153;
+}
+.status-completed {
+  --status-color: 74 222 128;
+}
+.status-failed {
+  --status-color: 248 113 113;
 }

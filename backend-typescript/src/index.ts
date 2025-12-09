@@ -7,6 +7,9 @@ import authRoutes from "./routes/auth.js";
 import githubRoutes from "./routes/github.js";
 import projectRoutes from "./routes/projects.js";
 import storyRoutes from "./routes/stories.js";
+import taskRoutes from "./routes/tasks.js";
+import { getRedisClient, closeRedisConnections, startListening } from "./redis/index.js";
+import { getOrchestrator } from "./agents/orchestrator.js";
 
 const app = express();
 
@@ -49,18 +52,53 @@ app.use("/api/auth", authRoutes);
 app.use("/api/github", githubRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/projects", storyRoutes);
+app.use("/api", taskRoutes);
 
 const PORT = parseInt(process.env.PORT || "3000", 10);
 
-const server = app.listen(PORT, () => {
+/**
+ * Initialize Redis and Orchestrator
+ */
+async function initializeAgentSystem(): Promise<void> {
+  try {
+    // Connect to Redis
+    await getRedisClient();
+    console.log("✅ Redis connected");
+
+    // Start event bus listener
+    await startListening();
+    console.log("✅ Event bus listening");
+
+    // Start the orchestrator
+    const orchestrator = getOrchestrator();
+    await orchestrator.start();
+    console.log("✅ Orchestrator started");
+  } catch (error) {
+    console.error("⚠️ Failed to initialize agent system:", error);
+    console.log("⚠️ Server will run without agent processing");
+  }
+}
+
+const server = app.listen(PORT, async () => {
   const timestamp = new Date().toISOString();
   console.log(`[${timestamp}] 🚀 TypeScript Backend starting...`);
   console.log(`[${timestamp}] ✅ Server running on http://localhost:${PORT}`);
   console.log(`[${timestamp}] 📊 Health check: http://localhost:${PORT}/health`);
+
+  // Initialize agent system after server is ready
+  await initializeAgentSystem();
 });
 
-const shutdown = () => {
+const shutdown = async () => {
   console.log("\n🛑 Shutting down server...");
+
+  // Stop orchestrator
+  const orchestrator = getOrchestrator();
+  orchestrator.stop();
+
+  // Close Redis connections
+  await closeRedisConnections();
+
   server.close(() => {
     process.exit(0);
   });

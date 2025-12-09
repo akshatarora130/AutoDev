@@ -11,15 +11,24 @@ interface FilterSidebarProps {
   setPriorityFilter: (value: string) => void;
   searchQuery: string;
   setSearchQuery: (value: string) => void;
-  statusCounts: {
-    all: number;
-    pending: number;
-    processing: number;
-    completed: number;
-    failed: number;
-  };
+  statusCounts: Record<string, number>;
   variant?: "overlay" | "inline";
 }
+
+// All pipeline statuses
+const statusOptions = [
+  { value: "all", label: "All Stories" },
+  { value: "pending", label: "Pending" },
+  { value: "dividing", label: "Dividing" },
+  { value: "reviewing", label: "Reviewing" },
+  { value: "tasks_ready", label: "Tasks Ready" },
+  { value: "generating", label: "Generating" },
+  { value: "code_review", label: "Code Review" },
+  { value: "testing", label: "Testing" },
+  { value: "deploying", label: "Deploying" },
+  { value: "completed", label: "Completed" },
+  { value: "failed", label: "Failed" },
+];
 
 export const FilterSidebar = ({
   isOpen,
@@ -74,35 +83,34 @@ export const FilterSidebar = ({
             <label className="text-xs font-medium text-text-muted uppercase tracking-wider">
               Status
             </label>
-            <div className="space-y-2">
-              {[
-                { value: "all", label: "All Stories", count: statusCounts.all },
-                { value: "pending", label: "Pending", count: statusCounts.pending },
-                { value: "processing", label: "Processing", count: statusCounts.processing },
-                { value: "completed", label: "Completed", count: statusCounts.completed },
-                { value: "failed", label: "Failed", count: statusCounts.failed },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  onClick={() => setStatusFilter(option.value)}
-                  className={`w-full flex items-center justify-between p-2.5 rounded-lg border transition-all ${
-                    statusFilter === option.value
-                      ? "bg-accent-primary/10 border-accent-primary/50 text-text-primary"
-                      : "bg-white/5 border-white/5 text-text-muted hover:bg-white/10 hover:text-text-primary"
-                  }`}
-                >
-                  <span className="text-xs">{option.label}</span>
-                  <span
-                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      statusFilter === option.value
-                        ? "bg-accent-primary/20 text-accent-primary"
-                        : "bg-black/20"
-                    }`}
-                  >
-                    {option.count}
-                  </span>
-                </button>
-              ))}
+            <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+              {statusOptions
+                .filter((opt) => (statusCounts[opt.value] || 0) > 0 || opt.value === "all")
+                .map((option) => {
+                  const count = statusCounts[option.value] || 0;
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => setStatusFilter(option.value)}
+                      className={`w-full flex items-center justify-between p-2.5 rounded-lg border transition-all ${
+                        statusFilter === option.value
+                          ? "bg-accent-primary/10 border-accent-primary/50 text-text-primary"
+                          : "bg-white/5 border-white/5 text-text-muted hover:bg-white/10 hover:text-text-primary"
+                      }`}
+                    >
+                      <span className="text-xs">{option.label}</span>
+                      <span
+                        className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                          statusFilter === option.value
+                            ? "bg-accent-primary/20 text-accent-primary"
+                            : "bg-black/20"
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
             </div>
           </div>
 
@@ -196,35 +204,34 @@ export const FilterSidebar = ({
               <label className="text-sm font-medium text-text-muted uppercase tracking-wider">
                 Status
               </label>
-              <div className="space-y-2">
-                {[
-                  { value: "all", label: "All Stories", count: statusCounts.all },
-                  { value: "pending", label: "Pending", count: statusCounts.pending },
-                  { value: "processing", label: "Processing", count: statusCounts.processing },
-                  { value: "completed", label: "Completed", count: statusCounts.completed },
-                  { value: "failed", label: "Failed", count: statusCounts.failed },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setStatusFilter(option.value)}
-                    className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
-                      statusFilter === option.value
-                        ? "bg-accent-primary/10 border-accent-primary/50 text-text-primary"
-                        : "bg-white/5 border-white/5 text-text-muted hover:bg-white/10 hover:text-text-primary"
-                    }`}
-                  >
-                    <span className="text-sm">{option.label}</span>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        statusFilter === option.value
-                          ? "bg-accent-primary/20 text-accent-primary"
-                          : "bg-black/20"
-                      }`}
-                    >
-                      {option.count}
-                    </span>
-                  </button>
-                ))}
+              <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                {statusOptions
+                  .filter((opt) => (statusCounts[opt.value] || 0) > 0 || opt.value === "all")
+                  .map((option) => {
+                    const count = statusCounts[option.value] || 0;
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => setStatusFilter(option.value)}
+                        className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${
+                          statusFilter === option.value
+                            ? "bg-accent-primary/10 border-accent-primary/50 text-text-primary"
+                            : "bg-white/5 border-white/5 text-text-muted hover:bg-white/10 hover:text-text-primary"
+                        }`}
+                      >
+                        <span className="text-sm">{option.label}</span>
+                        <span
+                          className={`text-xs px-2 py-0.5 rounded-full ${
+                            statusFilter === option.value
+                              ? "bg-accent-primary/20 text-accent-primary"
+                              : "bg-black/20"
+                          }`}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
               </div>
             </div>
 

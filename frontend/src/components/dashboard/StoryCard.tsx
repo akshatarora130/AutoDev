@@ -16,12 +16,54 @@ const statusConfig = {
     border: "border-yellow-500/20",
     label: "Pending",
   },
-  processing: {
+  dividing: {
+    icon: AlertCircle,
+    color: "text-violet-500",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/20",
+    label: "Dividing",
+  },
+  reviewing: {
     icon: AlertCircle,
     color: "text-blue-500",
     bg: "bg-blue-500/10",
     border: "border-blue-500/20",
-    label: "Processing",
+    label: "Reviewing",
+  },
+  tasks_ready: {
+    icon: CheckCircle2,
+    color: "text-cyan-500",
+    bg: "bg-cyan-500/10",
+    border: "border-cyan-500/20",
+    label: "Tasks Ready",
+  },
+  generating: {
+    icon: AlertCircle,
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/20",
+    label: "Generating",
+  },
+  code_review: {
+    icon: AlertCircle,
+    color: "text-orange-500",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/20",
+    label: "Code Review",
+  },
+  testing: {
+    icon: AlertCircle,
+    color: "text-pink-500",
+    bg: "bg-pink-500/10",
+    border: "border-pink-500/20",
+    label: "Testing",
+  },
+  deploying: {
+    icon: AlertCircle,
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/20",
+    label: "Deploying",
   },
   completed: {
     icon: CheckCircle2,
@@ -106,15 +148,25 @@ export const StoryCard = ({ story, onProcess, onClick }: StoryCardProps) => {
             <span>Process</span>
           </Button>
         )}
-        {story.status === "processing" && (
+        {["dividing", "reviewing", "generating", "code_review", "testing", "deploying"].includes(
+          story.status
+        ) && (
           <div className="flex items-center gap-1.5 text-xs text-blue-400 font-medium">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse shadow-[0_0_8px_rgba(96,165,250,0.5)]" />
-            <span className="text-[10px] uppercase tracking-wide">Processing</span>
+            <span className="text-[10px] uppercase tracking-wide">
+              {statusConfig[story.status].label}
+            </span>
           </div>
         )}
         {story.status === "completed" && (
           <div className="flex items-center gap-1.5 text-xs text-green-400">
             <CheckCircle2 className="w-3.5 h-3.5" />
+          </div>
+        )}
+        {story.status === "tasks_ready" && (
+          <div className="flex items-center gap-1.5 text-xs text-cyan-400">
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span className="text-[10px] uppercase tracking-wide">Ready</span>
           </div>
         )}
       </div>

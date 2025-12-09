@@ -38,7 +38,13 @@ interface SortableStoryCardProps {
 
 const statusColumns: Array<{ id: Story["status"]; title: string; color: string }> = [
   { id: "pending", title: "Pending", color: "yellow" },
-  { id: "processing", title: "Processing", color: "blue" },
+  { id: "dividing", title: "Dividing", color: "violet" },
+  { id: "reviewing", title: "Reviewing", color: "blue" },
+  { id: "tasks_ready", title: "Tasks Ready", color: "cyan" },
+  { id: "generating", title: "Generating", color: "amber" },
+  { id: "code_review", title: "Code Review", color: "orange" },
+  { id: "testing", title: "Testing", color: "pink" },
+  { id: "deploying", title: "Deploying", color: "emerald" },
   { id: "completed", title: "Completed", color: "green" },
   { id: "failed", title: "Failed", color: "red" },
 ];
@@ -184,30 +190,10 @@ function KanbanColumn({ column, stories, onStoryClick, onProcessStory }: KanbanC
       }`}
     >
       {/* Column Header */}
-      <div
-        className={`p-4 border-b border-white/5 ${
-          column.id === "pending"
-            ? "bg-yellow-500/5"
-            : column.id === "processing"
-              ? "bg-blue-500/5"
-              : column.id === "completed"
-                ? "bg-green-500/5"
-                : "bg-red-500/5"
-        } rounded-t-xl`}
-      >
+      <div className={`p-4 border-b border-white/5 bg-${column.color}-500/5 rounded-t-xl`}>
         <div className="flex items-center justify-between mb-1">
           <div className="flex items-center gap-2">
-            <div
-              className={`w-2 h-2 rounded-full ${
-                column.id === "pending"
-                  ? "bg-yellow-500"
-                  : column.id === "processing"
-                    ? "bg-blue-500"
-                    : column.id === "completed"
-                      ? "bg-green-500"
-                      : "bg-red-500"
-              }`}
-            />
+            <div className={`w-2 h-2 rounded-full bg-${column.color}-500`} />
             <h3 className="font-semibold text-sm text-text-primary tracking-wide">
               {column.title}
             </h3>

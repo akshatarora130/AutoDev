@@ -26,10 +26,36 @@ export interface Story {
   title: string;
   description: string;
   priority: "low" | "medium" | "high" | "critical";
-  status: "pending" | "processing" | "completed" | "failed";
+  status:
+    | "pending"
+    | "dividing"
+    | "reviewing"
+    | "tasks_ready"
+    | "generating"
+    | "code_review"
+    | "testing"
+    | "deploying"
+    | "completed"
+    | "failed";
+
+  // Selection tracking
+  selectedAt?: string | null;
+  selectedBy?: "priority" | "llm_tiebreaker" | null;
+  llmReasoning?: string | null;
+
+  // Completion tracking
+  completedAt?: string | null;
+  previewUrl?: string | null;
+
+  // Error tracking
+  failedAt?: string | null;
+  failedPhase?: string | null;
+  failedReason?: string | null;
+
   metadata?: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
+  tasks?: Task[];
 }
 
 export interface Task {
@@ -37,9 +63,28 @@ export interface Task {
   storyId: string;
   title: string;
   description: string;
-  type: string;
+  type: "frontend" | "backend" | "database" | "integration";
   priority: number;
-  status: "pending" | "in_progress" | "completed" | "failed";
+  status:
+    | "pending"
+    | "reviewed"
+    | "subdivided"
+    | "in_progress"
+    | "code_generated"
+    | "code_approved"
+    | "tests_generated"
+    | "tests_passed"
+    | "deployed"
+    | "failed";
+
+  // Review tracking
+  reviewedAt?: string | null;
+  reviewNotes?: string | null;
+
+  // Subdivision
+  parentTaskId?: string | null;
+  childTasks?: Task[];
+
   dependencies?: string[] | null;
   agentAssignments?: Record<string, unknown> | null;
   createdAt: string;

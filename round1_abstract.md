@@ -14,7 +14,7 @@ Our **multi-agent development workflow** employs **specialized autonomous agents
 
 ### Key Innovation: 90--95% Automation
 
-Users connect their Azure DevOps project or submit user stories. The system automatically processes multiple user stories sequentially, prioritizes them based on dependencies and business value, generates complete full-stack applications (frontend, backend, database), creates and executes comprehensive test suites, and deploys applications with live preview URLs. All of this happens autonomously in the background, requiring minimal human intervention.
+Users connect their Azure DevOps project, JIRA or submit user stories. The system automatically processes multiple user stories sequentially, prioritizes them based on dependencies and business value, break then into the sub Tasks, generates complete full-stack applications (frontend, backend, database), creates and executes comprehensive test suites, and deploys applications with live preview URLs. All of this happens autonomously in the background, requiring minimal human intervention.
 
 ---
 
@@ -39,6 +39,7 @@ Our Collaborative Agentic Platform uses a **multi-agent orchestration architectu
 All agents communicate through a **centralized Event Bus** (Redis Pub/Sub). Agents publish events (e.g., "tasks_created", "code_approved") and subscribe to relevant topics. The Orchestrator manages a story-level queue for sequential story processing (one story at a time) and task-level queues enabling parallel processing of independent tasks within each story while respecting dependencies.
 
 ### Story Isolation & Redis Scope (New)
+
 - After subdivision, the orchestrator **selects one story at a time** for execution.
 - Redis tracks **only the active story and its subtasks** to minimize contention and simplify recovery.
 - Subtasks within the active story run in parallel where dependencies allow; the next story is loaded only after all subtasks pass code review and tests.

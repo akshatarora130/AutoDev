@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plus, Filter, Menu } from "lucide-react";
 import { Button } from "../common/Button";
-import { KanbanBoard } from "./KanbanBoard";
+import { PipelineKanbanBoard } from "./PipelineKanbanBoard";
 import { CreateStoryModal } from "./CreateStoryModal";
 import { FilterSidebar } from "./FilterSidebar";
 import type { Story, CreateStoryParams } from "../../types";
@@ -9,7 +9,6 @@ import type { Story, CreateStoryParams } from "../../types";
 interface StoryListProps {
   stories: Story[];
   onStoryClick?: (story: Story) => void;
-  onProcessStory?: (story: Story) => void;
   onCreateStory: (data: CreateStoryParams) => Promise<void>;
   onStatusChange?: (storyId: string, newStatus: Story["status"]) => Promise<void>;
   isSidebarOpen: boolean;
@@ -20,7 +19,6 @@ interface StoryListProps {
 export const StoryList = ({
   stories,
   onStoryClick,
-  onProcessStory,
   onCreateStory,
   onStatusChange,
   isSidebarOpen,
@@ -47,10 +45,17 @@ export const StoryList = ({
     return matchesSearch && matchesStatus && matchesPriority;
   });
 
+  // Count all pipeline statuses
   const statusCounts = {
     all: stories.length,
     pending: stories.filter((s) => s.status === "pending").length,
-    processing: stories.filter((s) => s.status === "processing").length,
+    dividing: stories.filter((s) => s.status === "dividing").length,
+    reviewing: stories.filter((s) => s.status === "reviewing").length,
+    tasks_ready: stories.filter((s) => s.status === "tasks_ready").length,
+    generating: stories.filter((s) => s.status === "generating").length,
+    code_review: stories.filter((s) => s.status === "code_review").length,
+    testing: stories.filter((s) => s.status === "testing").length,
+    deploying: stories.filter((s) => s.status === "deploying").length,
     completed: stories.filter((s) => s.status === "completed").length,
     failed: stories.filter((s) => s.status === "failed").length,
   };
@@ -139,11 +144,10 @@ export const StoryList = ({
           </div>
         </div>
 
-        {/* Stories Content - Always Kanban */}
-        <KanbanBoard
+        {/* Pipeline Kanban Board */}
+        <PipelineKanbanBoard
           stories={filteredStories}
           onStoryClick={onStoryClick}
-          onProcessStory={onProcessStory}
           onStatusChange={onStatusChange}
         />
       </div>

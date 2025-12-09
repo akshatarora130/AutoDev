@@ -39,6 +39,13 @@ export const DashboardPage = () => {
   useEffect(() => {
     if (selectedProject) {
       loadStories(selectedProject.id);
+
+      // Auto-refresh stories every 3 seconds to show pipeline progress
+      const interval = setInterval(() => {
+        loadStories(selectedProject.id);
+      }, 3000);
+
+      return () => clearInterval(interval);
     } else {
       setStories([]);
     }
@@ -101,17 +108,6 @@ export const DashboardPage = () => {
     }
   };
 
-  const handleProcessStory = async (story: Story) => {
-    if (!selectedProject) return;
-    try {
-      await storyApi.process(selectedProject.id, story.id);
-      // Reload stories to get updated status
-      await loadStories(selectedProject.id);
-    } catch (error: any) {
-      alert(error.response?.data?.error || "Failed to process story");
-    }
-  };
-
   const handleStatusChange = async (storyId: string, newStatus: Story["status"]) => {
     if (!selectedProject) return;
     try {
@@ -155,7 +151,6 @@ export const DashboardPage = () => {
         {selectedProject ? (
           <StoryList
             stories={stories}
-            onProcessStory={handleProcessStory}
             onCreateStory={async (data: CreateStoryParams) => {
               await handleCreateStory(data);
             }}

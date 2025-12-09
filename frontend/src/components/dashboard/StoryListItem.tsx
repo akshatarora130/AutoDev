@@ -8,18 +8,54 @@ interface StoryListItemProps {
   onClick?: (story: Story) => void;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { color: string; bg: string; border: string; label: string }> = {
   pending: {
     color: "text-yellow-500",
     bg: "bg-yellow-500/10",
     border: "border-yellow-500/20",
     label: "Pending",
   },
-  processing: {
+  dividing: {
+    color: "text-violet-500",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/20",
+    label: "Dividing",
+  },
+  reviewing: {
     color: "text-blue-500",
     bg: "bg-blue-500/10",
     border: "border-blue-500/20",
-    label: "Processing",
+    label: "Reviewing",
+  },
+  tasks_ready: {
+    color: "text-cyan-500",
+    bg: "bg-cyan-500/10",
+    border: "border-cyan-500/20",
+    label: "Tasks Ready",
+  },
+  generating: {
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/20",
+    label: "Generating",
+  },
+  code_review: {
+    color: "text-orange-500",
+    bg: "bg-orange-500/10",
+    border: "border-orange-500/20",
+    label: "Code Review",
+  },
+  testing: {
+    color: "text-pink-500",
+    bg: "bg-pink-500/10",
+    border: "border-pink-500/20",
+    label: "Testing",
+  },
+  deploying: {
+    color: "text-emerald-500",
+    bg: "bg-emerald-500/10",
+    border: "border-emerald-500/20",
+    label: "Deploying",
   },
   completed: {
     color: "text-green-500",
@@ -43,8 +79,22 @@ const priorityConfig = {
 };
 
 export const StoryListItem = ({ story, onProcess, onClick }: StoryListItemProps) => {
-  const statusStyle = statusConfig[story.status];
+  const statusStyle = statusConfig[story.status] || statusConfig.pending;
   const priorityStyle = priorityConfig[story.priority];
+
+  // Determine status indicator color
+  const statusColorMap: Record<string, string> = {
+    pending: "bg-yellow-500",
+    dividing: "bg-violet-500",
+    reviewing: "bg-blue-500",
+    tasks_ready: "bg-cyan-500",
+    generating: "bg-amber-500",
+    code_review: "bg-orange-500",
+    testing: "bg-pink-500",
+    deploying: "bg-emerald-500",
+    completed: "bg-green-500",
+    failed: "bg-red-500",
+  };
 
   return (
     <div
@@ -55,7 +105,7 @@ export const StoryListItem = ({ story, onProcess, onClick }: StoryListItemProps)
     >
       {/* Status Indicator Bar */}
       <div
-        className={`w-1 h-8 rounded-full ${story.status === "completed" ? "bg-green-500" : story.status === "processing" ? "bg-blue-500" : story.status === "failed" ? "bg-red-500" : "bg-yellow-500"} opacity-50 group-hover:opacity-100 transition-opacity`}
+        className={`w-1 h-8 rounded-full ${statusColorMap[story.status] || "bg-yellow-500"} opacity-50 group-hover:opacity-100 transition-opacity`}
       />
 
       {/* Main Content */}

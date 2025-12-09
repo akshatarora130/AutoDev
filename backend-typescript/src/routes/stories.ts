@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { requireAuth } from "../middleware/auth.js";
 import type { CreateStoryParams } from "../types/project.js";
+import { eventBus } from "../redis/eventBus.js";
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -45,6 +46,11 @@ router.post("/:projectId/stories", async (req: Request, res: Response) => {
         status: "pending",
         metadata: (metadata || {}) as any,
       },
+    });
+
+    // Trigger queue check to start processing (non-blocking)
+    eventBus.publish("QUEUE_CHECK", { projectId }).catch((err) => {
+      console.error("Failed to publish QUEUE_CHECK event:", err);
     });
 
     res.status(201).json(story);
@@ -249,10 +255,10 @@ router.post("/:projectId/stories/:id/process", async (req: Request, res: Respons
       data: { status: "processing" },
     });
 
-    // TODO: Trigger Python backend agent workflow
-    // This will be implemented when we set up the Python backend
+    // TODO: Trigger Typescript backend agent workflow
+    // This will be implemented when we set up the Typescript backend
     // For now, just return success
-    // In production, this would publish an event to Redis or call the Python API
+    // In production, this would publish an event to Redis or call the Typescript API
 
     res.json({ message: "Story processing started", storyId: id });
   } catch (error: any) {
