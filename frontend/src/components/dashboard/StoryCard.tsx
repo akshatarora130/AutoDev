@@ -83,10 +83,15 @@ export const StoryCard = ({ story, onProcess, onClick }: StoryCardProps) => {
           </span>
           <div className="flex items-center gap-1 text-[10px] text-text-muted">
             <Calendar className="w-3 h-3" />
-            <span>{new Date(story.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+            <span>
+              {new Date(story.createdAt).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              })}
+            </span>
           </div>
         </div>
-        
+
         {onProcess && story.status === "pending" && (
           <Button
             variant="primary"

@@ -16,13 +16,13 @@ export const RepoListItem = ({ repo, onClick }: RepoListItemProps) => {
       onClick={onClick}
     >
       <Icon
-          className={cn(
-            "w-4 h-4 shrink-0 transition-colors",
+        className={cn(
+          "w-4 h-4 shrink-0 transition-colors",
           repo.source === "github"
             ? "text-text-muted group-hover:text-accent-primary"
-              : "text-text-muted group-hover:text-text-secondary"
-          )}
-        />
+            : "text-text-muted group-hover:text-text-secondary"
+        )}
+      />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between">

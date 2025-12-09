@@ -54,7 +54,9 @@ export const StoryListItem = ({ story, onProcess, onClick }: StoryListItemProps)
       onClick={() => onClick?.(story)}
     >
       {/* Status Indicator Bar */}
-      <div className={`w-1 h-8 rounded-full ${story.status === 'completed' ? 'bg-green-500' : story.status === 'processing' ? 'bg-blue-500' : story.status === 'failed' ? 'bg-red-500' : 'bg-yellow-500'} opacity-50 group-hover:opacity-100 transition-opacity`} />
+      <div
+        className={`w-1 h-8 rounded-full ${story.status === "completed" ? "bg-green-500" : story.status === "processing" ? "bg-blue-500" : story.status === "failed" ? "bg-red-500" : "bg-yellow-500"} opacity-50 group-hover:opacity-100 transition-opacity`}
+      />
 
       {/* Main Content */}
       <div className="flex-1 min-w-0 grid grid-cols-12 gap-4 items-center">
@@ -63,29 +65,34 @@ export const StoryListItem = ({ story, onProcess, onClick }: StoryListItemProps)
           <h3 className="font-medium text-sm text-text-primary truncate group-hover:text-accent-primary transition-colors">
             {story.title}
           </h3>
-          <p className="text-xs text-text-muted truncate opacity-70">
-            {story.description}
-          </p>
+          <p className="text-xs text-text-muted truncate opacity-70">{story.description}</p>
         </div>
 
         {/* Status Badge */}
         <div className="col-span-2">
-          <span className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-medium ${statusStyle.bg} ${statusStyle.color} border ${statusStyle.border}`}>
+          <span
+            className={`inline-flex items-center px-2 py-1 rounded text-[10px] font-medium ${statusStyle.bg} ${statusStyle.color} border ${statusStyle.border}`}
+          >
             {statusStyle.label}
           </span>
         </div>
 
         {/* Priority */}
         <div className="col-span-2">
-           <span className={`text-xs font-medium ${priorityStyle.color}`}>
-             {priorityStyle.label}
-           </span>
+          <span className={`text-xs font-medium ${priorityStyle.color}`}>
+            {priorityStyle.label}
+          </span>
         </div>
 
         {/* Date */}
         <div className="col-span-2 flex items-center gap-1.5 text-xs text-text-muted/60">
           <Calendar className="w-3.5 h-3.5" />
-          <span>{new Date(story.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+          <span>
+            {new Date(story.createdAt).toLocaleDateString(undefined, {
+              month: "short",
+              day: "numeric",
+            })}
+          </span>
         </div>
       </div>
 
@@ -106,7 +113,7 @@ export const StoryListItem = ({ story, onProcess, onClick }: StoryListItemProps)
           </Button>
         )}
         <button className="p-1.5 rounded-lg hover:bg-white/10 text-text-muted hover:text-text-primary transition-colors">
-            <MoreHorizontal className="w-4 h-4" />
+          <MoreHorizontal className="w-4 h-4" />
         </button>
       </div>
     </div>
