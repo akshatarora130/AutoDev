@@ -13,6 +13,7 @@ interface CreateRepoModalProps {
   onClose: () => void;
   onCreateProject: (data: CreateProjectParams) => void;
   onImportProject: (data: ImportProjectParams) => void;
+  isImporting?: boolean;
 }
 
 export const CreateRepoModal = ({
@@ -20,6 +21,7 @@ export const CreateRepoModal = ({
   onClose,
   onCreateProject,
   onImportProject,
+  isImporting = false,
 }: CreateRepoModalProps) => {
   const [mode, setMode] = useState<"create" | "import">("create");
   const [createForm, setCreateForm] = useState<CreateProjectParams>({
@@ -244,14 +246,22 @@ export const CreateRepoModal = ({
                     />
                   </>
                 )}
-                <div className="flex gap-2 justify-end pt-2">
-                  <Button variant="secondary" onClick={onClose}>
-                    Cancel
-                  </Button>
-                  <Button onClick={handleImportSubmit} disabled={!selectedRepo}>
-                    Import Project
-                  </Button>
+              {isImporting ? (
+                <div className="py-8 flex items-center justify-center">
+                  <Loader text="Importing repository... This may take a moment." />
                 </div>
+              ) : (
+                <>
+                  <div className="flex gap-2 justify-end pt-2">
+                    <Button variant="secondary" onClick={onClose}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleImportSubmit} disabled={!selectedRepo}>
+                      Import Project
+                    </Button>
+                  </div>
+                </>
+              )}
               </>
             )}
           </>

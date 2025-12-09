@@ -68,9 +68,20 @@ export class ProjectMemory {
     const client = getSupermemoryClient();
     const language = detectLanguage(file.path);
 
+    // Sanitize customId: only alphanumeric, hyphens, underscores allowed
+    const sanitizedPath = file.path
+      .replace(/[^a-zA-Z0-9-_]/g, "_") // Replace invalid chars with underscore
+      .replace(/_+/g, "_") // Collapse multiple underscores
+      .substring(0, 100); // Limit length
+    const customId = `${this.projectId}_${sanitizedPath}`;
+
+    // Wrap content to prevent Supermemory from treating HTML as URLs
+    // Add file path context and wrap in code block format
+    const wrappedContent = `Source code file: ${file.path}\nLanguage: ${language}\n\n\`\`\`${language}\n${file.content}\n\`\`\``;
+
     try {
       await client.memories.add({
-        content: file.content,
+        content: wrappedContent,
         containerTag: this.projectId,
         metadata: {
           type: "file",
@@ -78,7 +89,7 @@ export class ProjectMemory {
           extension: path.extname(file.path),
           language,
         },
-        customId: `${this.projectId}:${file.path}`,
+        customId,
       });
     } catch (error) {
       console.error(`Failed to index file ${file.path}:`, error);

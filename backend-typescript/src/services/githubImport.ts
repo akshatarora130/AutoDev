@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { fileService } from "./fileService.js";
+import { ProjectMemory } from "../supermemory/projectMemory.js";
 
 const prisma = new PrismaClient();
 
@@ -77,6 +78,23 @@ export class GitHubImportService {
     path: string,
     branch: string = "main"
   ): Promise<GitHubFile | null> {
+    // Skip known binary file extensions
+    const binaryExtensions = [
+      '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.webp', '.bmp',
+      '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+      '.zip', '.tar', '.gz', '.rar', '.7z',
+      '.exe', '.dll', '.so', '.dylib',
+      '.woff', '.woff2', '.ttf', '.eot', '.otf',
+      '.mp3', '.mp4', '.avi', '.mov', '.wav',
+      '.pyc', '.class', '.o', '.obj',
+      '.lock', '.bin', '.dat',
+    ];
+    
+    const lowerPath = path.toLowerCase();
+    if (binaryExtensions.some(ext => lowerPath.endsWith(ext))) {
+      return null;
+    }
+
     try {
       const fileData = await this.githubRequest(
         token,
@@ -91,7 +109,21 @@ export class GitHubImportService {
       let content = "";
       if (fileData.encoding === "base64") {
         try {
-          content = Buffer.from(fileData.content, "base64").toString("utf-8");
+          const buffer = Buffer.from(fileData.content, "base64");
+          
+          // Check for null bytes (binary file indicator)
+          if (buffer.includes(0x00)) {
+            console.log(`⏭️ Skipping binary file: ${path}`);
+            return null;
+          }
+          
+          content = buffer.toString("utf-8");
+          
+          // Double-check: if content has replacement characters, it's likely binary
+          if (content.includes('\uFFFD')) {
+            console.log(`⏭️ Skipping file with invalid UTF-8: ${path}`);
+            return null;
+          }
         } catch (e) {
           // Skip binary files
           return null;
@@ -145,12 +177,15 @@ export class GitHubImportService {
     // Filter only files (not directories)
     const fileItems = treeItems.filter((item: any) => item.type === "blob");
 
+    // Collect files for Supermemory indexing
+    const filesToIndex: Array<{ path: string; content: string }> = [];
+
     // Fetch and store files in batches
     const batchSize = 10;
     for (let i = 0; i < fileItems.length; i += batchSize) {
       const batch = fileItems.slice(i, i + batchSize);
 
-      await Promise.all(
+      const batchResults = await Promise.all(
         batch.map(async (item: any) => {
           const fileData = await this.fetchFileContent(
             token,
@@ -167,9 +202,26 @@ export class GitHubImportService {
               fileData.content,
               fileData.encoding
             );
+            return { path: fileData.path, content: fileData.content };
           }
+          return null;
         })
       );
+
+      // Collect successfully fetched files
+      batchResults.forEach((file) => {
+        if (file) {
+          filesToIndex.push(file);
+        }
+      });
+    }
+
+    // Index all files to Supermemory for LLM context
+    if (filesToIndex.length > 0) {
+      console.log(`📤 Indexing ${filesToIndex.length} files to Supermemory...`);
+      const memory = new ProjectMemory(project.id);
+      await memory.indexAllFiles(filesToIndex);
+      console.log(`✅ Files indexed to Supermemory for project: ${project.name}`);
     }
 
     return project;

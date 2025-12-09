@@ -25,6 +25,7 @@ export const DashboardPage = () => {
   const [stories, setStories] = useState<Story[]>([]);
   const [_loadingStories, setLoadingStories] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [isCreateStoryModalOpen, setIsCreateStoryModalOpen] = useState(false);
   const [createStoryForm, setCreateStoryForm] = useState<CreateStoryParams>({
     title: "",
@@ -88,12 +89,15 @@ export const DashboardPage = () => {
 
   const handleImportProject = async (data: ImportProjectParams) => {
     try {
+      setIsImporting(true);
       const newProject = await projectApi.import(data);
       setProjects([newProject, ...projects]);
       setIsCreateModalOpen(false);
       setSelectedProject(newProject);
     } catch (error: any) {
       alert(error.response?.data?.error || "Failed to import project");
+    } finally {
+      setIsImporting(false);
     }
   };
 
@@ -168,6 +172,7 @@ export const DashboardPage = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onCreateProject={handleCreateProject}
         onImportProject={handleImportProject}
+        isImporting={isImporting}
       />
       <CreateStoryModal
         isOpen={isCreateStoryModalOpen}
