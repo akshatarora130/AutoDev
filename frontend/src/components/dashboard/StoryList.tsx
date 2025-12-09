@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Filter, Menu } from "lucide-react";
+import { Plus, Filter, Menu, FileCode, ExternalLink } from "lucide-react";
 import { Button } from "../common/Button";
 import { PipelineKanbanBoard } from "./PipelineKanbanBoard";
 import { CreateStoryModal } from "./CreateStoryModal";
@@ -14,6 +14,7 @@ interface StoryListProps {
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
   projectName?: string;
+  projectId?: string;
 }
 
 export const StoryList = ({
@@ -24,6 +25,7 @@ export const StoryList = ({
   isSidebarOpen,
   onToggleSidebar,
   projectName,
+  projectId,
 }: StoryListProps) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -130,6 +132,21 @@ export const StoryList = ({
                   <Filter className="w-4 h-4" />
                   <span>Filter</span>
                 </Button>
+
+                {projectId && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      const url = `/files?projectId=${projectId}&projectName=${encodeURIComponent(projectName || "Project")}`;
+                      window.open(url, "_blank");
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <FileCode className="w-4 h-4" />
+                    <span>View Files</span>
+                    <ExternalLink className="w-3 h-3 opacity-60" />
+                  </Button>
+                )}
 
                 <Button
                   variant="primary"

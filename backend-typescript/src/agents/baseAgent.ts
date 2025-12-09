@@ -63,6 +63,32 @@ export abstract class BaseAgent {
   }
 
   /**
+   * Sanitize data to remove null bytes and invalid Unicode characters
+   * PostgreSQL cannot store \u0000 characters
+   */
+  private sanitizeForDatabase(data: Record<string, unknown>): Record<string, unknown> {
+    const sanitize = (value: unknown): unknown => {
+      if (typeof value === 'string') {
+        // Remove null bytes and other problematic characters
+        return value.replace(/\u0000/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+      }
+      if (Array.isArray(value)) {
+        return value.map(sanitize);
+      }
+      if (value !== null && typeof value === 'object') {
+        const sanitized: Record<string, unknown> = {};
+        for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+          sanitized[key] = sanitize(val);
+        }
+        return sanitized;
+      }
+      return value;
+    };
+
+    return sanitize(data) as Record<string, unknown>;
+  }
+
+  /**
    * Log agent action to database
    */
   protected async log(
@@ -71,13 +97,16 @@ export abstract class BaseAgent {
     taskId?: string
   ): Promise<void> {
     try {
+      // Sanitize data to remove null bytes that PostgreSQL can't handle
+      const sanitizedData = this.sanitizeForDatabase(data);
+
       await prisma.agentLog.create({
         data: {
           projectId: this.projectId,
           taskId,
           agentType: this.name,
           event,
-          data: data as object,
+          data: sanitizedData as object,
           timestamp: new Date(),
         },
       });

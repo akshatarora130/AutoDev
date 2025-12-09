@@ -116,6 +116,146 @@ export interface TasksReviewedEvent {
   };
 }
 
+// Phase 3: Code Generation Events
+export interface StoryGeneratingEvent {
+  type: "STORY_GENERATING";
+  payload: {
+    storyId: string;
+    projectId: string;
+  };
+}
+
+export interface TasksPrioritizedEvent {
+  type: "TASKS_PRIORITIZED";
+  payload: {
+    storyId: string;
+    projectId: string;
+    batchCount: number;
+    totalTasks: number;
+  };
+}
+
+export interface CodeGeneratedEvent {
+  type: "CODE_GENERATED";
+  payload: {
+    taskId: string;
+    projectId: string;
+    artifactId: string;
+    fileCount: number;
+  };
+}
+
+export interface CodeRegeneratedEvent {
+  type: "CODE_REGENERATED";
+  payload: {
+    taskId: string;
+    projectId: string;
+    artifactId: string;
+  };
+}
+
+export interface ProjectAnalyzedEvent {
+  type: "PROJECT_ANALYZED";
+  payload: {
+    projectId: string;
+    type: string;
+    packageManager: string;
+  };
+}
+
+// Phase 4: Code Review Events
+export interface StoryCodeReviewEvent {
+  type: "STORY_CODE_REVIEW";
+  payload: {
+    storyId: string;
+    projectId: string;
+  };
+}
+
+export interface CodeApprovedEvent {
+  type: "CODE_APPROVED";
+  payload: {
+    taskId: string;
+    projectId: string;
+    artifactId: string;
+    approved: boolean;
+    score: number;
+  };
+}
+
+export interface CodeRejectedEvent {
+  type: "CODE_REJECTED";
+  payload: {
+    taskId: string;
+    projectId: string;
+    artifactId: string;
+    approved: boolean;
+    score: number;
+    requiredChanges: string[];
+  };
+}
+
+// Phase 5: Testing Events
+export interface StoryTestingEvent {
+  type: "STORY_TESTING";
+  payload: {
+    storyId: string;
+    projectId: string;
+  };
+}
+
+export interface TestsGeneratedEvent {
+  type: "TESTS_GENERATED";
+  payload: {
+    taskId: string;
+    projectId: string;
+    fileCount: number;
+    testCommands: Record<string, string | undefined>;
+  };
+}
+
+export interface TestsPassedEvent {
+  type: "TESTS_PASSED";
+  payload: {
+    taskId: string;
+    projectId: string;
+    passed: boolean;
+    totalTests: number;
+    failedTests: number;
+  };
+}
+
+export interface TestsFailedEvent {
+  type: "TESTS_FAILED";
+  payload: {
+    taskId: string;
+    projectId: string;
+    passed: boolean;
+    totalTests: number;
+    failedTests: number;
+  };
+}
+
+// Documentation Events
+export interface DocumentationUpdatedEvent {
+  type: "DOCUMENTATION_UPDATED";
+  payload: {
+    projectId: string;
+    storyId: string;
+    storyTitle: string;
+  };
+}
+
+// Cancellation Event
+export interface StoryCancelledEvent {
+  type: "STORY_CANCELLED";
+  payload: {
+    storyId: string;
+    projectId: string;
+    rolledBack: boolean;
+  };
+}
+
 // Union type of all events
 export type AgentEvent =
   | QueueCheckEvent
@@ -125,11 +265,29 @@ export type AgentEvent =
   | StoryReadyEvent
   | StoryCompletedEvent
   | StoryFailedEvent
+  | StoryCancelledEvent
   | TaskCreatedEvent
   | TasksCreatedEvent
   | TaskReviewedEvent
   | TaskSubdividedEvent
-  | TasksReviewedEvent;
+  | TasksReviewedEvent
+  // Phase 3
+  | StoryGeneratingEvent
+  | TasksPrioritizedEvent
+  | CodeGeneratedEvent
+  | CodeRegeneratedEvent
+  | ProjectAnalyzedEvent
+  // Phase 4
+  | StoryCodeReviewEvent
+  | CodeApprovedEvent
+  | CodeRejectedEvent
+  // Phase 5
+  | StoryTestingEvent
+  | TestsGeneratedEvent
+  | TestsPassedEvent
+  | TestsFailedEvent
+  // Documentation
+  | DocumentationUpdatedEvent;
 
 // Event type string union
 export type AgentEventType = AgentEvent["type"];

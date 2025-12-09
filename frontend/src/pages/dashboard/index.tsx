@@ -6,6 +6,7 @@ import { DashboardMainContent } from "../../components/dashboard/DashboardMainCo
 import { CreateRepoModal } from "../../components/dashboard/CreateRepoModal";
 import { CreateStoryModal } from "../../components/dashboard/CreateStoryModal";
 import { StoryList } from "../../components/dashboard/StoryList";
+import { StoryActivitySidebar } from "../../components/dashboard/StoryActivitySidebar";
 import { projectApi, storyApi } from "../../utils/api";
 import { useAuthStore } from "../../stores/authStore";
 import type {
@@ -32,6 +33,8 @@ export const DashboardPage = () => {
     description: "",
     priority: "medium",
   });
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null);
+  const [isActivitySidebarOpen, setIsActivitySidebarOpen] = useState(false);
 
   useEffect(() => {
     loadProjects();
@@ -155,6 +158,10 @@ export const DashboardPage = () => {
         {selectedProject ? (
           <StoryList
             stories={stories}
+            onStoryClick={(story) => {
+              setSelectedStory(story);
+              setIsActivitySidebarOpen(true);
+            }}
             onCreateStory={async (data: CreateStoryParams) => {
               await handleCreateStory(data);
             }}
@@ -162,6 +169,7 @@ export const DashboardPage = () => {
             isSidebarOpen={isSidebarOpen}
             onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
             projectName={selectedProject.name}
+            projectId={selectedProject.id}
           />
         ) : (
           <DashboardMainContent />
@@ -181,6 +189,17 @@ export const DashboardPage = () => {
         onFormChange={setCreateStoryForm}
         onSubmit={() => handleCreateStory(createStoryForm)}
       />
+      {selectedProject && (
+        <StoryActivitySidebar
+          story={selectedStory}
+          projectId={selectedProject.id}
+          isOpen={isActivitySidebarOpen}
+          onClose={() => {
+            setIsActivitySidebarOpen(false);
+            setSelectedStory(null);
+          }}
+        />
+      )}
     </div>
   );
 };

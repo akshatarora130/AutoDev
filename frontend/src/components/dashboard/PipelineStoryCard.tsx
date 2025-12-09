@@ -18,6 +18,8 @@ import {
   Zap,
   ExternalLink,
   ChevronDown,
+  StopCircle,
+  XCircle,
 } from "lucide-react";
 import type { Story, Task } from "../../types";
 import { useState } from "react";
@@ -25,11 +27,12 @@ import { useState } from "react";
 interface PipelineStoryCardProps {
   story: Story;
   onClick?: (story: Story) => void;
+  onCancel?: (storyId: string) => void;
 }
 
 // Status configuration with icons and colors
 const statusConfig: Record<
-  Story["status"],
+  Story["status"] | "cancelled",
   {
     icon: React.ComponentType<{ className?: string }>;
     color: string;
@@ -37,6 +40,7 @@ const statusConfig: Record<
     borderColor: string;
     label: string;
     isProcessing?: boolean;
+    isCancellable?: boolean;
   }
 > = {
   pending: {
@@ -53,6 +57,7 @@ const statusConfig: Record<
     borderColor: "border-violet-500/20",
     label: "Dividing",
     isProcessing: true,
+    isCancellable: true,
   },
   reviewing: {
     icon: MessageSquare,
@@ -61,6 +66,7 @@ const statusConfig: Record<
     borderColor: "border-blue-500/20",
     label: "Reviewing",
     isProcessing: true,
+    isCancellable: true,
   },
   tasks_ready: {
     icon: ListTodo,
@@ -68,6 +74,7 @@ const statusConfig: Record<
     bgColor: "bg-cyan-500/10",
     borderColor: "border-cyan-500/20",
     label: "Tasks Ready",
+    isCancellable: true,
   },
   generating: {
     icon: Code2,
@@ -76,6 +83,7 @@ const statusConfig: Record<
     borderColor: "border-amber-500/20",
     label: "Generating",
     isProcessing: true,
+    isCancellable: true,
   },
   code_review: {
     icon: CheckCircle,
@@ -84,6 +92,7 @@ const statusConfig: Record<
     borderColor: "border-orange-500/20",
     label: "Code Review",
     isProcessing: true,
+    isCancellable: true,
   },
   testing: {
     icon: FlaskConical,
@@ -92,6 +101,7 @@ const statusConfig: Record<
     borderColor: "border-pink-500/20",
     label: "Testing",
     isProcessing: true,
+    isCancellable: true,
   },
   deploying: {
     icon: Rocket,
@@ -100,6 +110,7 @@ const statusConfig: Record<
     borderColor: "border-emerald-500/20",
     label: "Deploying",
     isProcessing: true,
+    isCancellable: true,
   },
   completed: {
     icon: CheckCircle,
@@ -114,6 +125,13 @@ const statusConfig: Record<
     bgColor: "bg-red-500/10",
     borderColor: "border-red-500/20",
     label: "Failed",
+  },
+  cancelled: {
+    icon: XCircle,
+    color: "text-gray-400",
+    bgColor: "bg-gray-500/10",
+    borderColor: "border-gray-500/20",
+    label: "Cancelled",
   },
 };
 
@@ -131,9 +149,10 @@ const taskTypeIcons = {
   integration: "🔗",
 };
 
-export const PipelineStoryCard = ({ story, onClick }: PipelineStoryCardProps) => {
+export const PipelineStoryCard = ({ story, onClick, onCancel }: PipelineStoryCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const status = statusConfig[story.status];
+  const [isCancelling, setIsCancelling] = useState(false);
+  const status = statusConfig[story.status as keyof typeof statusConfig] || statusConfig.pending;
   const priority = priorityConfig[story.priority];
   const StatusIcon = status.icon;
   const tasks = story.tasks || [];
@@ -319,16 +338,42 @@ export const PipelineStoryCard = ({ story, onClick }: PipelineStoryCardProps) =>
             </div>
           </div>
 
-          {/* Status Label */}
-          <div className={`flex items-center gap-1.5 text-[10px] font-medium ${status.color}`}>
-            {status.isProcessing && (
-              <motion.div
-                className="w-1.5 h-1.5 rounded-full bg-current"
-                animate={{ opacity: [0.5, 1, 0.5] }}
-                transition={{ duration: 1, repeat: Infinity }}
-              />
+          <div className="flex items-center gap-2">
+            {/* Cancel Button */}
+            {status.isCancellable && onCancel && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (window.confirm("Cancel this story? All changes will be rolled back.")) {
+                    setIsCancelling(true);
+                    onCancel(story.id);
+                  }
+                }}
+                disabled={isCancelling}
+                className={`flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-colors ${
+                  isCancelling
+                    ? "bg-gray-500/20 text-gray-400 cursor-not-allowed"
+                    : "bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30"
+                }`}
+              >
+                <StopCircle className="w-3 h-3" />
+                {isCancelling ? "Cancelling..." : "Cancel"}
+              </motion.button>
             )}
-            <span className="uppercase tracking-wide">{status.label}</span>
+
+            {/* Status Label */}
+            <div className={`flex items-center gap-1.5 text-[10px] font-medium ${status.color}`}>
+              {status.isProcessing && (
+                <motion.div
+                  className="w-1.5 h-1.5 rounded-full bg-current"
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                />
+              )}
+              <span className="uppercase tracking-wide">{status.label}</span>
+            </div>
           </div>
         </div>
       </div>

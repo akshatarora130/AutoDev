@@ -4,7 +4,7 @@
   "description": "Collaborative Agentic Platform - Multi-agent development automation",
   "scripts": {
     "setup": "bun run install:all && bun run db:setup",
-    "install:all": "bun run install:ts-backend && bun run install:connector && bun run install:deployment && bun run install:llm && bun run install:frontend",
+    "install:all": "bun run install:ts-backend && bun run install:connector && bun run install:deployment && bun run install:frontend",
     "install:ts-backend": "cd backend-typescript && bun install",
     "install:connector": "cd connector-service && bun install",
     "install:deployment": "cd deployment-service && bun install",
@@ -14,7 +14,7 @@
     "db:push": "cd backend-typescript && bun run db:push",
     "db:migrate": "cd backend-typescript && bun run db:migrate",
     "db:studio": "cd backend-typescript && bun run db:studio",
-    "lint": "bun run lint:ts-backend && bun run lint:connector && bun run lint:deployment && bun run lint:llm && bun run lint:frontend",
+    "lint": "bun run lint:ts-backend && bun run lint:connector && bun run lint:deployment && bun run lint:frontend",
     "lint:ts-backend": "cd backend-typescript && bun run lint",
     "lint:connector": "cd connector-service && bun run lint",
     "lint:deployment": "cd deployment-service && bun run lint",

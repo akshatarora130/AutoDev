@@ -156,4 +156,19 @@ export const storyApi = {
     const response = await api.post(`/api/projects/${projectId}/stories/${id}/process`);
     return response.data;
   },
+  cancel: async (
+    projectId: string,
+    id: string,
+    rollback: boolean = true
+  ): Promise<{
+    message: string;
+    storyId: string;
+    rolledBack: boolean;
+    rollbackResult: { filesRestored: number; filesDeleted: number } | null;
+  }> => {
+    const response = await api.post(`/api/projects/${projectId}/stories/${id}/cancel`, {
+      rollback,
+    });
+    return response.data;
+  },
 };

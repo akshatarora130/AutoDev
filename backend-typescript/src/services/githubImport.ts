@@ -80,18 +80,51 @@ export class GitHubImportService {
   ): Promise<GitHubFile | null> {
     // Skip known binary file extensions
     const binaryExtensions = [
-      '.png', '.jpg', '.jpeg', '.gif', '.ico', '.svg', '.webp', '.bmp',
-      '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-      '.zip', '.tar', '.gz', '.rar', '.7z',
-      '.exe', '.dll', '.so', '.dylib',
-      '.woff', '.woff2', '.ttf', '.eot', '.otf',
-      '.mp3', '.mp4', '.avi', '.mov', '.wav',
-      '.pyc', '.class', '.o', '.obj',
-      '.lock', '.bin', '.dat',
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".ico",
+      ".svg",
+      ".webp",
+      ".bmp",
+      ".pdf",
+      ".doc",
+      ".docx",
+      ".xls",
+      ".xlsx",
+      ".ppt",
+      ".pptx",
+      ".zip",
+      ".tar",
+      ".gz",
+      ".rar",
+      ".7z",
+      ".exe",
+      ".dll",
+      ".so",
+      ".dylib",
+      ".woff",
+      ".woff2",
+      ".ttf",
+      ".eot",
+      ".otf",
+      ".mp3",
+      ".mp4",
+      ".avi",
+      ".mov",
+      ".wav",
+      ".pyc",
+      ".class",
+      ".o",
+      ".obj",
+      ".lock",
+      ".bin",
+      ".dat",
     ];
-    
+
     const lowerPath = path.toLowerCase();
-    if (binaryExtensions.some(ext => lowerPath.endsWith(ext))) {
+    if (binaryExtensions.some((ext) => lowerPath.endsWith(ext))) {
       return null;
     }
 
@@ -110,17 +143,17 @@ export class GitHubImportService {
       if (fileData.encoding === "base64") {
         try {
           const buffer = Buffer.from(fileData.content, "base64");
-          
+
           // Check for null bytes (binary file indicator)
           if (buffer.includes(0x00)) {
             console.log(`⏭️ Skipping binary file: ${path}`);
             return null;
           }
-          
+
           content = buffer.toString("utf-8");
-          
+
           // Double-check: if content has replacement characters, it's likely binary
-          if (content.includes('\uFFFD')) {
+          if (content.includes("\uFFFD")) {
             console.log(`⏭️ Skipping file with invalid UTF-8: ${path}`);
             return null;
           }

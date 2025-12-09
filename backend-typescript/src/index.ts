@@ -8,6 +8,7 @@ import githubRoutes from "./routes/github.js";
 import projectRoutes from "./routes/projects.js";
 import storyRoutes from "./routes/stories.js";
 import taskRoutes from "./routes/tasks.js";
+import logsRoutes from "./routes/logs.js";
 import { getRedisClient, closeRedisConnections, startListening } from "./redis/index.js";
 import { getOrchestrator } from "./agents/orchestrator.js";
 
@@ -52,6 +53,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/github", githubRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/projects", storyRoutes);
+app.use("/api/projects", logsRoutes);
 app.use("/api", taskRoutes);
 
 const PORT = parseInt(process.env.PORT || "3000", 10);

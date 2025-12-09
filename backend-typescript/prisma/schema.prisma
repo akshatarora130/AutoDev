@@ -68,7 +68,7 @@ model Story {
   priority     String    @default("medium")
   status       String    @default("pending")
   // Status values: pending | dividing | reviewing | tasks_ready | generating | 
-  //                code_review | testing | deploying | completed | failed
+  //                code_review | testing | deploying | completed | failed | cancelled
 
   // Selection tracking
   selectedAt   DateTime?
@@ -215,4 +215,17 @@ model Deployment {
   @@index([projectId])
   @@index([status])
   @@map("deployments")
+}
+
+model FileSnapshot {
+  id        String   @id @default(uuid())
+  storyId   String
+  filePath  String
+  content   String   @db.Text
+  existed   Boolean  @default(true)  // false if file didn't exist before (was created)
+  createdAt DateTime @default(now())
+
+  @@index([storyId])
+  @@index([storyId, filePath])
+  @@map("file_snapshots")
 }

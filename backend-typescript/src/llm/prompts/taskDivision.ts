@@ -38,10 +38,12 @@ TASK TYPES:
 - "backend": API endpoints, server logic, middleware, services
 - "database": Schema changes, migrations, queries, models
 - "integration": Connecting services, API integrations, configuration
+- "deletion": Removing files, components, or features from the codebase
+- "test_cleanup": Removing or updating test files that are no longer needed
 
 For each task, provide:
 - title: Short, descriptive name (e.g., "Create user registration API endpoint")
-- description: Detailed implementation requirements and acceptance criteria
+- description: Detailed implementation requirements and acceptance criteria. For deletion tasks, list the specific files to delete.
 - type: One of the task types above
 - priority: Number (1 = highest priority, should be done first)
 - dependencies: Array of task titles this task depends on (empty if none)
@@ -49,9 +51,9 @@ For each task, provide:
 IMPORTANT: You MUST respond with ONLY a valid JSON array. No other text, no markdown code blocks, no explanation before or after the JSON.
 
 EXAMPLE RESPONSE (this is the ONLY format you should use):
-[{"title": "Create User model", "description": "Create database model for User", "type": "database", "priority": 1, "dependencies": []}, {"title": "Create auth endpoint", "description": "Create POST /api/auth endpoint", "type": "backend", "priority": 2, "dependencies": ["Create User model"]}]
+[{"title": "Create User model", "description": "Create database model for User", "type": "database", "priority": 1, "dependencies": []}, {"title": "Delete old auth files", "description": "Delete files: src/old-auth.ts, src/legacy-login.tsx", "type": "deletion", "priority": 2, "dependencies": []}]
 
-Your JSON array response (ONLY the JSON array, nothing else):`;
+Your JSON array response (ONLY the JSON array, nothing else):`
 }
 
 /**
