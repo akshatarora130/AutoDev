@@ -315,7 +315,7 @@ export class Orchestrator {
         if (!testResult.passed) {
           testFailedCount++;
           console.log(`   ⚠️ Tests failed for task: ${task.title}`);
-          console.log(`   Error: ${testResult.failures.map(f => f.error).join(", ")}`);
+          console.log(`   Error: ${testResult.failures.map((f) => f.error).join(", ")}`);
         } else {
           // Update task status to tests_passed
           await prisma.task.update({

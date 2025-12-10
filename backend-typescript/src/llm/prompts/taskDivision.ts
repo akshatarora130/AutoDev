@@ -53,7 +53,7 @@ IMPORTANT: You MUST respond with ONLY a valid JSON array. No other text, no mark
 EXAMPLE RESPONSE (this is the ONLY format you should use):
 [{"title": "Create User model", "description": "Create database model for User", "type": "database", "priority": 1, "dependencies": []}, {"title": "Delete old auth files", "description": "Delete files: src/old-auth.ts, src/legacy-login.tsx", "type": "deletion", "priority": 2, "dependencies": []}]
 
-Your JSON array response (ONLY the JSON array, nothing else):`
+Your JSON array response (ONLY the JSON array, nothing else):`;
 }
 
 /**

@@ -177,6 +177,9 @@ export class CodeReviewerAgent extends BaseAgent {
     // Format: // File: path\n// Action: action\ncontent
     const fileBlocks = artifact.content.split("\n\n---\n\n");
 
+    // Deduplicate by file path (keep first occurrence)
+    const uniqueBlocks = new Map<string, { path: string; action: string; content: string }>();
+
     for (const block of fileBlocks) {
       const lines = block.split("\n");
       const pathMatch = lines[0]?.match(/\/\/ File: (.+)/);
@@ -184,10 +187,20 @@ export class CodeReviewerAgent extends BaseAgent {
 
       if (!pathMatch) continue;
 
-      const filePath = pathMatch[1];
+      const filePath = pathMatch[1].trim();
       const action = actionMatch?.[1] || "create";
       const content = lines.slice(2).join("\n");
 
+      // Only keep first occurrence of each file path
+      if (!uniqueBlocks.has(filePath)) {
+        uniqueBlocks.set(filePath, { path: filePath, action, content });
+      } else {
+        console.warn(`⚠️ Duplicate file path detected in artifact and skipped: ${filePath}`);
+      }
+    }
+
+    // Process unique files
+    for (const { path: filePath, action, content } of uniqueBlocks.values()) {
       if (action === "delete") {
         await prisma.file.deleteMany({
           where: {
@@ -196,7 +209,7 @@ export class CodeReviewerAgent extends BaseAgent {
           },
         });
       } else {
-        // Upsert file
+        // Upsert file (this handles duplicates at DB level too)
         await prisma.file.upsert({
           where: {
             projectId_path: {

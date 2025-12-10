@@ -57,8 +57,37 @@ export class CodeGeneratorAgent extends BaseAgent {
       `Generate ${task.type} code for: ${task.title}. ${task.description}`
     );
 
-    // Get existing project files for context
     const existingFiles = await this.getExistingFiles();
+
+    // Also check for files that might be created by other tasks in the same story
+    const storyTasks = await prisma.task.findMany({
+      where: {
+        storyId: task.storyId,
+        id: { not: task.id }, // Exclude current task
+      },
+      include: {
+        codeArtifacts: {
+          where: { status: { in: ["pending", "approved"] } },
+        },
+      },
+    });
+
+    // Extract file paths from other tasks' artifacts
+    const otherTaskFiles = new Set<string>();
+    for (const otherTask of storyTasks) {
+      for (const artifact of otherTask.codeArtifacts) {
+        const blocks = artifact.content.split("\n\n---\n\n");
+        for (const block of blocks) {
+          const pathMatch = block.match(/\/\/ File: (.+)/);
+          if (pathMatch) {
+            otherTaskFiles.add(pathMatch[1].trim());
+          }
+        }
+      }
+    }
+
+    // Combine existing files and other task files
+    const allExistingFiles = [...new Set([...existingFiles, ...Array.from(otherTaskFiles)])];
 
     // Check if we're modifying an existing file
     const targetFile = await this.findTargetFile(task);
@@ -80,7 +109,7 @@ export class CodeGeneratorAgent extends BaseAgent {
           taskDescription: task.description,
           taskType: task.type as "frontend" | "backend" | "database" | "integration",
           projectContext,
-          existingFiles,
+          existingFiles: allExistingFiles,
           isModification: false,
         });
 
@@ -98,13 +127,17 @@ export class CodeGeneratorAgent extends BaseAgent {
     // Apply patches if modification mode
     const processedFiles = await this.processFiles(response.files);
 
+    // Deduplicate files by path (keep first occurrence)
+    const uniqueFiles = this.deduplicateFiles(processedFiles);
+
     // Save as CodeArtifact
-    const artifact = await this.saveArtifact(task, processedFiles, response.dependencies || []);
+    const artifact = await this.saveArtifact(task, uniqueFiles, response.dependencies || []);
 
     await this.log("CODE_GENERATION_COMPLETED", {
       taskId: task.id,
       artifactId: artifact.id,
-      fileCount: processedFiles.length,
+      fileCount: uniqueFiles.length,
+      originalFileCount: processedFiles.length,
       isModification,
     });
 
@@ -113,11 +146,11 @@ export class CodeGeneratorAgent extends BaseAgent {
       taskId: task.id,
       projectId: this.projectId,
       artifactId: artifact.id,
-      fileCount: processedFiles.length,
+      fileCount: uniqueFiles.length,
     });
 
     return {
-      files: processedFiles,
+      files: uniqueFiles,
       dependencies: response.dependencies || [],
       notes: response.notes || "",
       artifactId: artifact.id,
@@ -131,10 +164,31 @@ export class CodeGeneratorAgent extends BaseAgent {
     const files = await prisma.file.findMany({
       where: { projectId: this.projectId },
       select: { path: true },
-      take: 100, // Limit for context size
+      take: 200, // Increased limit to better detect duplicates
+      orderBy: { path: "asc" },
     });
 
     return files.map((f) => f.path);
+  }
+
+  /**
+   * Deduplicate files by path (keep first occurrence)
+   */
+  private deduplicateFiles(files: GeneratedFile[]): GeneratedFile[] {
+    const seen = new Set<string>();
+    const unique: GeneratedFile[] = [];
+
+    for (const file of files) {
+      const normalizedPath = file.path.trim();
+      if (!seen.has(normalizedPath)) {
+        seen.add(normalizedPath);
+        unique.push(file);
+      } else {
+        console.warn(`⚠️ Duplicate file detected and removed: ${normalizedPath}`);
+      }
+    }
+
+    return unique;
   }
 
   /**
@@ -178,7 +232,7 @@ export class CodeGeneratorAgent extends BaseAgent {
     for (const file of files) {
       // Ensure content is a string (handle JSON objects)
       let content = file.content;
-      if (typeof content === 'object' && content !== null) {
+      if (typeof content === "object" && content !== null) {
         content = JSON.stringify(content, null, 2);
       }
 
@@ -265,7 +319,7 @@ export class CodeGeneratorAgent extends BaseAgent {
       .map((f) => {
         let content = f.content;
         // If content is an object (e.g., JSON that wasn't stringified), stringify it
-        if (typeof content === 'object' && content !== null) {
+        if (typeof content === "object" && content !== null) {
           content = JSON.stringify(content, null, 2);
         }
         return `// File: ${f.path}\n// Action: ${f.action}\n${content}`;

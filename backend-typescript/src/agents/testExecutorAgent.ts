@@ -57,7 +57,7 @@ export class TestExecutorAgent extends BaseAgent {
     const dockerAvailable = await sandboxService.isDockerAvailable();
     if (!dockerAvailable) {
       await this.log("DOCKER_NOT_AVAILABLE", { taskId });
-      
+
       // Fail the tests - Docker is required for proper test execution
       const failResult: TestExecutionResult = {
         passed: false,
@@ -66,16 +66,19 @@ export class TestExecutorAgent extends BaseAgent {
         failedTests: 1,
         skippedTests: 0,
         duration: 0,
-        failures: [{
-          testName: "Docker Availability Check",
-          error: "Docker is not running. Please start Docker to run tests.",
-        }],
-        output: "ERROR: Docker is not available. Tests cannot be executed without Docker.\n\nPlease ensure Docker Desktop is running and try again.",
+        failures: [
+          {
+            testName: "Docker Availability Check",
+            error: "Docker is not running. Please start Docker to run tests.",
+          },
+        ],
+        output:
+          "ERROR: Docker is not available. Tests cannot be executed without Docker.\n\nPlease ensure Docker Desktop is running and try again.",
       };
 
       // Save the failed result
       await this.saveTestResult(taskId, failResult);
-      
+
       // Update task status
       await prisma.task.update({
         where: { id: taskId },
@@ -113,11 +116,11 @@ export class TestExecutorAgent extends BaseAgent {
       // Get project config for commands
       const config = await this.getProjectConfig();
 
+      // Determine package manager from config (for install)
+      const packageManager = this.determinePackageManager(config, task);
+
       // Install dependencies
-      const installResult = await sandboxService.installDependencies(
-        sandbox.id,
-        config.packageManager
-      );
+      const installResult = await sandboxService.installDependencies(sandbox.id, packageManager);
 
       if (installResult.exitCode !== 0) {
         await this.log("INSTALL_FAILED", {
@@ -127,8 +130,8 @@ export class TestExecutorAgent extends BaseAgent {
         // Continue anyway, some tests might still work
       }
 
-      // Run unit tests
-      const testCommand = config.commands.test?.unit || "npm test";
+      // Determine correct test command based on task type and config
+      const testCommand = this.getTestCommand(task, config);
       const testResult = await sandboxService.runTests(sandbox.id, testCommand, 180000);
 
       // Parse results
@@ -237,7 +240,18 @@ export class TestExecutorAgent extends BaseAgent {
    * Get project configuration
    */
   private async getProjectConfig(): Promise<{
-    packageManager: "npm" | "bun" | "yarn" | "pnpm";
+    languages?: Array<{
+      language: string;
+      packageManager?: string;
+      directory: string;
+      type: "frontend" | "backend" | "shared";
+    }>;
+    type?: "monorepo" | "frontend" | "backend" | "fullstack";
+    structure?: {
+      frontend?: string;
+      backend?: string;
+      shared?: string;
+    };
     commands: {
       test?: {
         unit?: string;
@@ -263,11 +277,98 @@ export class TestExecutorAgent extends BaseAgent {
 
     // Default config
     return {
-      packageManager: "npm",
       commands: {
         test: { unit: "npm test" },
       },
     };
+  }
+
+  /**
+   * Determine package manager from config based on task type
+   */
+  private determinePackageManager(
+    config: Awaited<ReturnType<typeof this.getProjectConfig>>,
+    task: Task
+  ): "npm" | "bun" | "yarn" | "pnpm" {
+    // Try to find package manager from languages array
+    if (config.languages) {
+      // Find language matching task type
+      const matchingLang = config.languages.find(
+        (lang) => lang.type === task.type || (task.type === "backend" && lang.type === "backend")
+      );
+      if (matchingLang?.packageManager) {
+        const pm = matchingLang.packageManager.toLowerCase();
+        if (pm === "npm" || pm === "yarn" || pm === "pnpm" || pm === "bun") {
+          return pm as "npm" | "bun" | "yarn" | "pnpm";
+        }
+      }
+      // Fallback to first language's package manager
+      if (config.languages[0]?.packageManager) {
+        const pm = config.languages[0].packageManager.toLowerCase();
+        if (pm === "npm" || pm === "yarn" || pm === "pnpm" || pm === "bun") {
+          return pm as "npm" | "bun" | "yarn" | "pnpm";
+        }
+      }
+    }
+
+    // Default to npm
+    return "npm";
+  }
+
+  /**
+   * Get appropriate test command based on task type and project structure
+   */
+  private getTestCommand(
+    task: Task,
+    config: Awaited<ReturnType<typeof this.getProjectConfig>>
+  ): string {
+    // If config has a test command, use it (it should already include directory changes)
+    if (config.commands.test?.unit) {
+      return config.commands.test.unit;
+    }
+
+    // Fallback: determine command based on task type and structure
+    // Check if we can find a matching language for the task
+    if (config.languages) {
+      const matchingLang = config.languages.find(
+        (lang) => lang.type === task.type || (task.type === "backend" && lang.type === "backend")
+      );
+      if (matchingLang) {
+        // Generate command based on language
+        const dir = matchingLang.directory === "." ? "" : `cd ${matchingLang.directory} && `;
+        const pm = matchingLang.packageManager || "npm";
+
+        if (matchingLang.language === "python") {
+          return `${dir}python -m pytest`;
+        } else if (matchingLang.language === "java") {
+          return `${dir}mvn test`;
+        } else if (matchingLang.language === "go") {
+          return `${dir}go test ./...`;
+        } else if (matchingLang.language === "rust") {
+          return `${dir}cargo test`;
+        } else {
+          // TypeScript/JavaScript
+          const runCmd = pm === "npm" ? "npm run" : `${pm} run`;
+          return `${dir}${runCmd} test`;
+        }
+      }
+    }
+
+    // Fallback: use structure-based detection
+    if (task.type === "backend" && config.structure?.backend) {
+      return `cd ${config.structure.backend} && npm test`;
+    } else if (task.type === "frontend" && config.structure?.frontend) {
+      return `cd ${config.structure.frontend} && npm test`;
+    } else if (config.type === "monorepo" || config.type === "fullstack") {
+      if (config.structure?.backend) {
+        return `cd ${config.structure.backend} && npm test`;
+      } else if (config.structure?.frontend) {
+        return `cd ${config.structure.frontend} && npm test`;
+      }
+    }
+
+    // Default fallback
+    return "npm test";
   }
 
   /**

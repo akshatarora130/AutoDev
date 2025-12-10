@@ -68,14 +68,14 @@ export abstract class BaseAgent {
    */
   private sanitizeForDatabase(data: Record<string, unknown>): Record<string, unknown> {
     const sanitize = (value: unknown): unknown => {
-      if (typeof value === 'string') {
+      if (typeof value === "string") {
         // Remove null bytes and other problematic characters
-        return value.replace(/\u0000/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+        return value.replace(/\u0000/g, "").replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
       }
       if (Array.isArray(value)) {
         return value.map(sanitize);
       }
-      if (value !== null && typeof value === 'object') {
+      if (value !== null && typeof value === "object") {
         const sanitized: Record<string, unknown> = {};
         for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
           sanitized[key] = sanitize(val);

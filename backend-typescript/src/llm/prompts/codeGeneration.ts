@@ -30,7 +30,7 @@ export function buildNewFilePrompt(params: CodeGenPromptParams): string {
 ## Project Context
 ${params.projectContext}
 
-${params.existingFiles?.length ? `## Existing Project Files\n${params.existingFiles.join("\n")}` : ""}
+${params.existingFiles?.length ? `## Existing Project Files (DO NOT RECREATE THESE)\nThe following files already exist in the project. DO NOT create files with these paths:\n${params.existingFiles.map((f) => `- ${f}`).join("\n")}\n\n**IMPORTANT**: If you need to modify any of these files, use the "modify" action, NOT "create".` : ""}
 
 ${params.dependencies?.length ? `## Dependencies from Previous Tasks\nThis task depends on: ${params.dependencies.join(", ")}` : ""}
 
@@ -49,6 +49,16 @@ Respond with a valid JSON object containing the files to create, modify, or dele
       "action": "create"
     },
     {
+      "path": "package.json",
+      "content": "{\"name\": \"project\", \"dependencies\": {...}, \"scripts\": {...}}",
+      "action": "create"
+    },
+    {
+      "path": "autodev.config.json",
+      "content": "{\"type\": \"backend\", \"languages\": [...], \"commands\": {...}}",
+      "action": "create"
+    },
+    {
       "path": "relative/path/to/delete.ts",
       "content": "",
       "action": "delete"
@@ -59,21 +69,55 @@ Respond with a valid JSON object containing the files to create, modify, or dele
 }
 \`\`\`
 
+**IMPORTANT**: Always include package.json, tsconfig.json, and autodev.config.json when creating new projects or adding new dependencies.
+
 ## Supported Actions
 - **create**: Create a new file with the provided content
 - **modify**: Modify an existing file (use patch mode for this)
 - **delete**: Delete an existing file from the project
 
-## Rules
-1. Generate complete, working code - no placeholders or TODOs
-2. Follow the project's existing code style and conventions
-3. Include proper TypeScript types (no 'any')
-4. Add appropriate error handling
-5. Keep files under 500 lines - split into multiple files if needed
-6. Use meaningful variable and function names
-7. Include brief comments for complex logic
-8. For DELETE tasks: List all files to delete with action: "delete", content can be empty
-9. When removing a feature, ensure you delete ALL related files
+## CRITICAL RULES - READ CAREFULLY
+1. **DO NOT CREATE DUPLICATE FILES**: Check the existing files list above. If a file already exists, use "modify" action or skip it entirely
+2. **Each file path must be UNIQUE**: Do not generate multiple files with the same path
+3. **Check existing files before creating**: Review the "Existing Project Files" list - do not recreate files that already exist
+4. **ALWAYS INCLUDE CONFIG FILES**: You MUST generate ALL necessary configuration files:
+   - **package.json** (for TypeScript/JavaScript projects) - include ALL dependencies, scripts, and metadata. This is REQUIRED.
+   - **tsconfig.json** (for TypeScript projects) - include proper compiler options
+   - **requirements.txt** (for Python projects) - list all dependencies
+   - **Dockerfile** (if needed)
+   - **.gitignore** (if not exists)
+   - **README.md** (if creating a new project)
+   - **autodev.config.json** - ALWAYS generate or update this file with correct project structure and commands
+5. **Generate autodev.config.json**: After generating code, create/update autodev.config.json with:
+   - Correct project type (monorepo/frontend/backend/fullstack) based on actual code generated
+   - All detected languages with correct frameworks (e.g., Express.js = backend TypeScript, not Python)
+   - Proper command structure (FLAT, not nested by frontend/backend)
+   - Correct directory paths
+   - Structure: {
+     "type": "backend" | "frontend" | "fullstack" | "monorepo",
+     "languages": [{"language": "typescript", "runtime": "node", "packageManager": "npm", "frameworks": ["express"], "directory": ".", "type": "backend"}],
+     "commands": {
+       "install": ["npm install"],
+       "build": {"main": "npm run build"},
+       "lint": {"main": "npm run lint"},
+       "test": {"unit": "npm test"},
+       "start": {"dev": "npm run dev"}
+     },
+     "structure": {"backend": "."},
+     "frameworks": ["express"],
+     "dependencies": ["express", ...]
+   }
+6. Generate complete, working code - no placeholders or TODOs
+7. Follow the project's existing code style and conventions
+8. Include proper TypeScript types (no 'any')
+9. Add appropriate error handling
+10. Keep files under 500 lines - split into multiple files if needed
+11. Use meaningful variable and function names
+12. Include brief comments for complex logic
+13. For DELETE tasks: List all files to delete with action: "delete", content can be empty
+14. When removing a feature, ensure you delete ALL related files
+15. **If a file path already exists in the project, you MUST use "modify" action, not "create"**
+16. **Include ALL files**: Even small files like package.json, .env.example, tsconfig.json must be included
 
 Generate the code:`;
 }
@@ -129,11 +173,13 @@ Respond with a JSON object containing patches to apply. Use the MINIMAL changes 
 }
 \`\`\`
 
-## Rules
-1. Make MINIMAL changes - don't rewrite entire files
-2. Use exact string matching for search/replace
-3. Preserve existing code style
-4. Each patch should be self-contained
+## CRITICAL RULES - READ CAREFULLY
+1. **DO NOT CREATE DUPLICATE FILES**: Only modify the file specified in the path. Do not create new files with similar names
+2. Make MINIMAL changes - don't rewrite entire files
+3. Use exact string matching for search/replace
+4. Preserve existing code style
+5. Each patch should be self-contained
+6. **Ensure file path matches exactly** - do not create variations or duplicates
 
 Generate the patches:`;
 }

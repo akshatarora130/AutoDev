@@ -140,6 +140,7 @@ export class ProjectMemory {
 
   /**
    * Search for relevant context before agent execution
+   * Deduplicates files by path to avoid duplicate information
    */
   async getContext(query: string, limit = 5): Promise<ContextResult> {
     if (!isSupermemoryConfigured()) {
@@ -153,16 +154,33 @@ export class ProjectMemory {
       const results = await client.search.documents({
         q: query,
         containerTags: [this.projectId],
-        limit,
+        limit: limit * 2, // Get more results to account for deduplication
         rerank: true,
         includeSummary: true,
       });
 
-      const relevantFiles: RelevantFile[] = results.results.map((result) => ({
-        path: (result.metadata?.path as string) || "unknown",
-        content: result.chunks?.map((c) => c.content).join("\n") || "",
-        score: result.score || 0,
-      }));
+      // Deduplicate by file path (keep highest scoring occurrence)
+      const fileMap = new Map<string, RelevantFile>();
+
+      for (const result of results.results) {
+        const path = (result.metadata?.path as string) || "unknown";
+        const content = result.chunks?.map((c) => c.content).join("\n") || "";
+        const score = result.score || 0;
+
+        // Keep the highest scoring version of each file
+        const existing = fileMap.get(path);
+        if (!existing || score > existing.score) {
+          fileMap.set(path, { path, content, score });
+        } else if (existing && score === existing.score) {
+          // If scores are equal, merge content (might be different chunks)
+          existing.content = `${existing.content}\n\n---\n\n${content}`;
+        }
+      }
+
+      // Convert to array and sort by score (descending)
+      const relevantFiles: RelevantFile[] = Array.from(fileMap.values())
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit); // Take top N after deduplication
 
       return {
         relevantFiles,

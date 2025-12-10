@@ -98,8 +98,10 @@ export class TestGeneratorAgent extends BaseAgent {
       throw new Error("Failed to generate tests");
     }
 
+    const uniqueFiles = this.deduplicateTestFiles(response.files);
+
     // Save test files
-    await this.saveTestFiles(response.files);
+    await this.saveTestFiles(uniqueFiles);
 
     // Update task status
     await prisma.task.update({
@@ -109,18 +111,42 @@ export class TestGeneratorAgent extends BaseAgent {
 
     await this.log("TEST_GENERATION_COMPLETED", {
       taskId,
-      fileCount: response.files.length,
-      testTypes: [...new Set(response.files.map((f) => f.testType))],
+      fileCount: uniqueFiles.length,
+      originalFileCount: response.files.length,
+      testTypes: [...new Set(uniqueFiles.map((f) => f.testType))],
     });
 
     eventBus.publish("TESTS_GENERATED", {
       taskId,
       projectId: this.projectId,
-      fileCount: response.files.length,
+      fileCount: uniqueFiles.length,
       testCommands: response.testCommands,
     });
 
-    return response;
+    return {
+      ...response,
+      files: uniqueFiles,
+    };
+  }
+
+  /**
+   * Deduplicate test files by path
+   */
+  private deduplicateTestFiles(files: GeneratedTest[]): GeneratedTest[] {
+    const seen = new Set<string>();
+    const unique: GeneratedTest[] = [];
+
+    for (const file of files) {
+      const normalizedPath = file.path.trim();
+      if (!seen.has(normalizedPath)) {
+        seen.add(normalizedPath);
+        unique.push(file);
+      } else {
+        console.warn(`⚠️ Duplicate test file detected and removed: ${normalizedPath}`);
+      }
+    }
+
+    return unique;
   }
 
   /**

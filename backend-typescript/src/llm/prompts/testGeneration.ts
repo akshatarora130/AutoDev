@@ -72,6 +72,12 @@ Respond with a JSON object:
 }
 \`\`\`
 
+## CRITICAL RULES - READ CAREFULLY
+1. **DO NOT CREATE DUPLICATE TEST FILES**: Check if test files already exist. Use unique file names based on the code being tested
+2. **Each test file path must be UNIQUE**: Do not generate multiple test files with the same path
+3. **Use descriptive, unique file names**: Base the filename on the component/function being tested (e.g., "UserService.test.ts" not "test.ts")
+4. **Check project structure**: If tests are in "backend/tests" or "frontend/tests", use the correct path prefix
+
 ## Test Best Practices
 1. Test happy paths and edge cases
 2. Mock external dependencies
