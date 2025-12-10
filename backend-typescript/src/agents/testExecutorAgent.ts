@@ -57,7 +57,7 @@ export class TestExecutorAgent extends BaseAgent {
     const dockerAvailable = await sandboxService.isDockerAvailable();
     if (!dockerAvailable) {
       await this.log("DOCKER_NOT_AVAILABLE", { taskId });
-
+      
       // Fail the tests - Docker is required for proper test execution
       const failResult: TestExecutionResult = {
         passed: false,
@@ -68,8 +68,8 @@ export class TestExecutorAgent extends BaseAgent {
         duration: 0,
         failures: [
           {
-            testName: "Docker Availability Check",
-            error: "Docker is not running. Please start Docker to run tests.",
+          testName: "Docker Availability Check",
+          error: "Docker is not running. Please start Docker to run tests.",
           },
         ],
         output:
@@ -78,7 +78,7 @@ export class TestExecutorAgent extends BaseAgent {
 
       // Save the failed result
       await this.saveTestResult(taskId, failResult);
-
+      
       // Update task status
       await prisma.task.update({
         where: { id: taskId },
@@ -260,22 +260,15 @@ export class TestExecutorAgent extends BaseAgent {
       };
     };
   }> {
-    const configFile = await prisma.file.findFirst({
+    // Try to detect project structure from files
+    const packageJson = await prisma.file.findFirst({
       where: {
         projectId: this.projectId,
-        path: "autodev.config.json",
+        path: "package.json",
       },
     });
 
-    if (configFile) {
-      try {
-        return JSON.parse(configFile.content);
-      } catch {
-        // Invalid config
-      }
-    }
-
-    // Default config
+    // Default config - will be determined by project analyzer if needed
     return {
       commands: {
         test: { unit: "npm test" },

@@ -58,23 +58,28 @@ export class TestGeneratorAgent extends BaseAgent {
       throw new Error(`No approved code artifact found for task: ${taskId}`);
     }
 
-    // Get project config for frameworks
-    const configFile = await prisma.file.findFirst({
+    // Detect frameworks from package.json
+    const packageJson = await prisma.file.findFirst({
       where: {
         projectId: this.projectId,
-        path: "autodev.config.json",
+        path: "package.json",
       },
     });
 
-    let frameworks: string[] = [];
+    let frameworks: string[] = ["jest"]; // Default
     try {
-      if (configFile) {
-        const config = JSON.parse(configFile.content);
-        frameworks = config.frameworks || [];
+      if (packageJson) {
+        const pkg = JSON.parse(packageJson.content);
+        const allDeps = {
+          ...(pkg.dependencies || {}),
+          ...(pkg.devDependencies || {}),
+        };
+        if (allDeps.jest) frameworks.push("jest");
+        if (allDeps.vitest) frameworks.push("vitest");
+        if (allDeps.playwright) frameworks.push("playwright");
       }
     } catch {
-      // Default frameworks
-      frameworks = ["jest"];
+      // Use default
     }
 
     // Get project context

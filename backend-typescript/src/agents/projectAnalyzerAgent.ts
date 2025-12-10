@@ -1,6 +1,6 @@
 /**
  * Project Analyzer Agent
- * Analyzes project structure and generates autodev.config.json with commands
+ * Analyzes project structure and detects languages, frameworks, and generates appropriate commands
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -68,9 +68,6 @@ export class ProjectAnalyzerAgent extends BaseAgent {
 
     // Generate config using LLM
     const config = await this.generateConfigWithLLM(analysis, files);
-
-    // Save config as a special file
-    await this.saveConfig(config);
 
     await this.log("PROJECT_ANALYSIS_COMPLETED", {
       projectId: this.projectId,
@@ -327,7 +324,7 @@ Return ONLY valid JSON, no markdown, no explanations:`;
       if (file.path.endsWith(".tsx") || file.path.endsWith(".jsx")) {
         hasFrontend = true;
       }
-
+      
       // Detect backend by Node.js server patterns
       if (file.path.endsWith(".ts") || file.path.endsWith(".js")) {
         const content = file.content.toLowerCase();
@@ -350,7 +347,7 @@ Return ONLY valid JSON, no markdown, no explanations:`;
       const tsJsCount = files.filter(
         (f) => f.path.endsWith(".ts") || f.path.endsWith(".js")
       ).length;
-
+      
       // If mostly .tsx/.jsx files, it's frontend. Otherwise check for backend patterns
       if (tsxJsxCount > tsJsCount * 0.3) {
         hasFrontend = true;
@@ -490,7 +487,7 @@ Return ONLY valid JSON, no markdown, no explanations:`;
           integration?: string;
           e2e?: string;
         };
-        start: {
+      start: {
           dev: string;
           prod?: string;
         };
@@ -565,7 +562,7 @@ Return ONLY valid JSON, no markdown, no explanations:`;
         fixed.build = { ...nested };
       } else {
         fixed.build = commands.build;
-      }
+    }
     }
 
     // Fix lint commands - ensure flat structure
@@ -588,11 +585,11 @@ Return ONLY valid JSON, no markdown, no explanations:`;
           fixed.build[lang.type] = dir ? `${dir}${runCmd} build` : `${runCmd} build`;
         } else if (lang.language === "python") {
           fixed.build[lang.type] = dir ? `${dir}python setup.py build` : "python setup.py build";
-        }
       }
+    }
       if (Object.keys(fixed.build).length === 0) {
         fixed.build.main = "npm run build";
-      }
+  }
     }
 
     if (Object.keys(fixed.lint).length === 0) {
@@ -602,7 +599,7 @@ Return ONLY valid JSON, no markdown, no explanations:`;
           fixed.lint[lang.type] = dir ? `${dir}eslint .` : "eslint .";
         } else if (lang.language === "python") {
           fixed.lint[lang.type] = dir ? `${dir}pylint .` : "pylint .";
-        }
+    }
       }
       if (Object.keys(fixed.lint).length === 0) {
         fixed.lint.main = "npm run lint";
@@ -613,34 +610,6 @@ Return ONLY valid JSON, no markdown, no explanations:`;
   }
 
   // Legacy methods removed - now using LLM-based generation
-
-  /**
-   * Save configuration to project files
-   */
-  private async saveConfig(config: ProjectConfig): Promise<void> {
-    const configContent = JSON.stringify(config, null, 2);
-
-    await prisma.file.upsert({
-      where: {
-        projectId_path: {
-          projectId: this.projectId,
-          path: "autodev.config.json",
-        },
-      },
-      create: {
-        projectId: this.projectId,
-        path: "autodev.config.json",
-        content: configContent,
-        encoding: "utf-8",
-        size: Buffer.byteLength(configContent, "utf-8"),
-      },
-      update: {
-        content: configContent,
-        size: Buffer.byteLength(configContent, "utf-8"),
-        updatedAt: new Date(),
-      },
-    });
-  }
 }
 
 export default ProjectAnalyzerAgent;
