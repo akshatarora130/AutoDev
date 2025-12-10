@@ -124,6 +124,71 @@ export class CodeGeneratorAgent extends BaseAgent {
       throw new Error("Failed to generate code: Invalid LLM response");
     }
 
+    // Validate that package.json is included for backend/frontend tasks
+    if ((task.type === "backend" || task.type === "frontend") && !isModification) {
+      const hasPackageJson = response.files.some(
+        (f) => f.path === "package.json" || f.path.endsWith("/package.json")
+      );
+      const taskDescription = task.description.toLowerCase();
+      const needsPackageJson =
+        taskDescription.includes("express") ||
+        taskDescription.includes("node") ||
+        taskDescription.includes("typescript") ||
+        taskDescription.includes("javascript") ||
+        taskDescription.includes("react") ||
+        taskDescription.includes("next") ||
+        taskDescription.includes("server");
+
+      if (needsPackageJson && !hasPackageJson) {
+        await this.log("MISSING_PACKAGE_JSON", {
+          taskId: task.id,
+          taskType: task.type,
+          description: task.description,
+        });
+
+        // Add package.json if missing
+        const defaultPackageJson = {
+          path: "package.json",
+          content: JSON.stringify(
+            {
+              name: "project",
+              version: "1.0.0",
+              type: "module",
+              scripts: {
+                dev: "node --watch src/index.js",
+                start: "node src/index.js",
+                build: "tsc",
+                test: "jest",
+              },
+              dependencies: {},
+              devDependencies: {},
+            },
+            null,
+            2
+          ),
+          action: "create" as const,
+        };
+
+        // Check if Express is mentioned to add it as dependency
+        if (taskDescription.includes("express")) {
+          const pkg = JSON.parse(defaultPackageJson.content);
+          pkg.dependencies = { express: "^4.18.2" };
+          pkg.devDependencies = {
+            "@types/express": "^4.17.21",
+            "@types/node": "^20.10.0",
+            typescript: "^5.3.3",
+          };
+          defaultPackageJson.content = JSON.stringify(pkg, null, 2);
+        }
+
+        response.files.push(defaultPackageJson);
+        await this.log("ADDED_MISSING_PACKAGE_JSON", {
+          taskId: task.id,
+          packageJsonPath: defaultPackageJson.path,
+        });
+      }
+    }
+
     // Apply patches if modification mode
     const processedFiles = await this.processFiles(response.files);
 

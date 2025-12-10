@@ -76,12 +76,14 @@ Respond with a valid JSON object containing the files to create, modify, or dele
 2. **Each file path must be UNIQUE**: Do not generate multiple files with the same path
 3. **Check existing files before creating**: Review the "Existing Project Files" list - do not recreate files that already exist
 4. **ALWAYS INCLUDE CONFIG FILES**: You MUST generate ALL necessary configuration files:
-   - **package.json** (for TypeScript/JavaScript projects) - include ALL dependencies, scripts, and metadata. This is REQUIRED.
+   - **package.json** (for TypeScript/JavaScript/Node.js projects) - This is MANDATORY and REQUIRED. You MUST include it for ANY task involving Express, Node.js, TypeScript, or JavaScript. Include ALL dependencies (express, @types/node, typescript, etc.), scripts (start, dev, build, test), and metadata (name, version, type: "module" if using ES modules).
    - **tsconfig.json** (for TypeScript projects) - include proper compiler options
    - **requirements.txt** (for Python projects) - list all dependencies
    - **Dockerfile** (if needed)
    - **.gitignore** (if not exists)
    - **README.md** (if creating a new project)
+   
+   **CRITICAL FOR BACKEND/FRONTEND TASKS**: If the task mentions Express, Node.js, TypeScript, JavaScript, React, or any JS/TS framework, you MUST generate package.json. Without it, the project cannot run or install dependencies.
 5. Generate complete, working code - no placeholders or TODOs
 6. Follow the project's existing code style and conventions
 7. Include proper TypeScript types (no 'any')

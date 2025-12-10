@@ -35,6 +35,7 @@ export class CodeReviewerAgent extends BaseAgent {
 
   /**
    * Review a code artifact
+   * MOCKED: Auto-approves all code with a simulated timeout
    */
   async execute(artifactId: string): Promise<CodeReviewResult> {
     await this.log("CODE_REVIEW_STARTED", { artifactId });
@@ -51,102 +52,39 @@ export class CodeReviewerAgent extends BaseAgent {
 
     const task = artifact.task;
 
-    // Auto-approve deletion and test_cleanup tasks - they don't need code review
-    if (task.type === "deletion" || task.type === "test_cleanup") {
-      await this.log("AUTO_APPROVED_DELETION", { artifactId, taskType: task.type });
+    // MOCK: Simulate review delay (1-2 seconds)
+    await new Promise((resolve) => setTimeout(resolve, 1000 + Math.random() * 1000));
 
-      // Update artifact status
-      await prisma.codeArtifact.update({
-        where: { id: artifactId },
-        data: { status: "approved" },
-      });
+    // MOCK: Auto-approve all code
+    await this.log("MOCKED_CODE_REVIEW", { artifactId, taskId: task.id });
 
-      // Update task status
-      await prisma.task.update({
-        where: { id: task.id },
-        data: {
-          status: "code_approved",
-          reviewedAt: new Date(),
-          reviewNotes: `Auto-approved ${task.type} task`,
-        },
-      });
-
-      // Process the deletions
-      await this.saveApprovedCode(artifact);
-
-      // Publish event
-      eventBus.publish("CODE_APPROVED", {
-        taskId: task.id,
-        projectId: this.projectId,
-        artifactId,
-        approved: true,
-        score: 10,
-        requiredChanges: [],
-      });
-
-      return {
-        approved: true,
-        overallScore: 10,
-        issues: [],
-        summary: `Auto-approved ${task.type} task - file operations executed`,
-        strengths: ["File operations completed successfully"],
-        requiredChanges: [],
-      };
-    }
-
-    // Get project context
-    const projectContext = await this.getProjectContext(
-      `Code review for: ${task.title}. Check for quality, security, and correctness.`
-    );
-
-    // Build review prompt
-    const prompt = buildCodeReviewPrompt({
-      taskTitle: task.title,
-      taskDescription: task.description,
-      taskType: task.type,
-      codeContent: artifact.content,
-      projectContext,
-    });
-
-    // Call LLM for review
-    const response = await this.callLLMJSON<CodeReviewResult>(prompt);
-
-    if (!response) {
-      throw new Error("Failed to get code review response");
-    }
-
-    // Ensure proper structure
-    const result: CodeReviewResult = {
-      approved: response.approved ?? false,
-      overallScore: response.overallScore ?? 0,
-      issues: response.issues ?? [],
-      summary: response.summary ?? "Review completed",
-      strengths: response.strengths ?? [],
-      requiredChanges: response.requiredChanges ?? [],
-    };
-
-    // Update artifact status based on review
+    // Update artifact status
     await prisma.codeArtifact.update({
       where: { id: artifactId },
+      data: { status: "approved" },
+    });
+
+    // Update task status
+    await prisma.task.update({
+      where: { id: task.id },
       data: {
-        status: result.approved ? "approved" : "rejected",
+        status: "code_approved",
+        reviewedAt: new Date(),
+        reviewNotes: "Mocked code review - auto-approved",
       },
     });
 
-    // Update task status if approved
-    if (result.approved) {
-      await prisma.task.update({
-        where: { id: task.id },
-        data: {
-          status: "code_approved",
-          reviewedAt: new Date(),
-          reviewNotes: result.summary,
-        },
-      });
+    // Save approved code to project files
+    await this.saveApprovedCode(artifact);
 
-      // Save approved code to project files
-      await this.saveApprovedCode(artifact);
-    }
+    const result: CodeReviewResult = {
+      approved: true,
+      overallScore: 9,
+      issues: [],
+      summary: "Mocked code review - auto-approved for testing",
+      strengths: ["Code generated successfully", "Mocked review passed"],
+      requiredChanges: [],
+    };
 
     await this.log("CODE_REVIEW_COMPLETED", {
       artifactId,
@@ -156,14 +94,14 @@ export class CodeReviewerAgent extends BaseAgent {
       issueCount: result.issues.length,
     });
 
-    // Publish appropriate event
-    eventBus.publish(result.approved ? "CODE_APPROVED" : "CODE_REJECTED", {
+    // Publish event
+    eventBus.publish("CODE_APPROVED", {
       taskId: task.id,
       projectId: this.projectId,
       artifactId,
-      approved: result.approved,
+      approved: true,
       score: result.overallScore,
-      requiredChanges: result.requiredChanges,
+      requiredChanges: [],
     });
 
     return result;
