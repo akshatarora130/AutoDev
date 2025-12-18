@@ -1,0 +1,341 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[top=0.6in,bottom=0.7in,left=0.8in,right=0.8in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{fancyvrb}
+
+\setstretch{1.0}
+
+% Fixed width for section numbers to ensure alignment
+% Sections: "1.", "2.", "3.", "4." - need 1.5em width
+\titleformat{\section}{\Large\bfseries}{\makebox[1.5em][l]{\thesection.}}{0.5em}{}
+% Subsections: "1.1", "2.1", etc. - need 2.5em width for alignment
+\titleformat{\subsection}{\normalsize\bfseries}{\makebox[2.5em][l]{\thesubsection}}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{\makebox[3em][l]{\thesubsubsection}}{0.5em}{}
+
+% Reduce spacing around title
+\titlespacing*{\section}{0pt}{0.5em}{0.3em}
+\titlespacing*{\subsection}{0pt}{0.4em}{0.2em}
+
+% Consistent left margin for all itemize and enumerate
+\setlist[itemize]{leftmargin=1.5em,itemsep=0.05em,labelsep=0.3em}
+\setlist[enumerate]{leftmargin=1.5em,itemsep=0.05em,labelsep=0.3em}
+
+\title{\textbf{AutoDev Hackathon -- Collaborative Agentic Platform}}
+\author{Techfest 2025--26}
+\date{}
+
+\begin{document}
+
+\maketitle
+\vspace*{-0.3cm}
+
+\noindent\textbf{Team Name:} \textbf{Binary Pheonix} \quad \textbf{Team ID:} \textbf{Auto-250366} \\
+
+\vspace*{-0.2cm}
+
+\section{Problem Understanding}
+
+The software development lifecycle requires developers to manually parse requirements, break down user stories, write code across multiple layers (frontend, backend, database), create tests, review code, and deploy applications. This process is time-consuming, error-prone, and leads to inconsistent code quality.
+
+Our \textbf{multi-agent development workflow} employs \textbf{specialized autonomous agents} that collaborate through a centralized event bus to automate the entire pipeline. Unlike a monolithic ``god agent,'' our system uses specialized agents for task division, code generation, testing, and review, with parallel execution and recursive refinement capabilities.
+
+\subsection*{Key Innovation: 90--95\% Automation}
+
+Users connect their GitHub repository or submit user stories. The system automatically processes multiple user stories sequentially, prioritizes them based on dependencies and business value, generates complete full-stack applications (frontend, backend, database), creates and executes comprehensive test suites, and deploys applications with live preview URLs. All of this happens autonomously in the background, requiring minimal human intervention.
+
+\section{Proposed Architecture}
+
+Our Collaborative Agentic Platform uses a \textbf{multi-agent orchestration architecture} with specialized agents working collaboratively through an event-driven system. The architecture consists of a User Interface Layer (Web Dashboard), an Orchestration \& Coordination Layer (Event Bus with Redis Pub/Sub, State Store with PostgreSQL, and TypeScript Orchestrator), a GitHub Connector \& Parser, an Agent Pool with 10 specialized agents, and a Deployment Service. All agents communicate only via the centralized Event Bus.
+
+\subsection{Agent Responsibilities}
+
+\begin{enumerate}
+  \item \textbf{Task Divider Agent}: Breaks user stories into implementable subtasks.
+  \item \textbf{Task Reviewer Agent}: Reviews subtasks and recursively divides complex ones.
+  \item \textbf{Task Prioritizer Agent}: Prioritizes stories and tasks based on dependencies using topological sorting.
+  \item \textbf{Code Generator Agent}: Generates frontend, backend, and database code (parallel instances).
+  \item \textbf{Code Reviewer Agent}: Reviews code quality, security, and requirement adherence.
+  \item \textbf{Test Generator Agent}: Creates unit, integration, and E2E tests.
+  \item \textbf{Test Executor Agent}: Executes tests in isolated Docker containers, generates coverage reports.
+  \item \textbf{Prompt Optimizer Agent}: Uses 4-D methodology to improve prompt effectiveness.
+  \item \textbf{Project Analyzer Agent}: Detects languages, frameworks, and generates build commands.
+  \item \textbf{Documentation Agent}: Generates code documentation automatically.
+\end{enumerate}
+
+\subsection{Communication Model}
+
+All agents communicate through a \textbf{centralized Event Bus} (Redis Pub/Sub). Agents publish events (e.g., ``tasks\_created'', ``code\_approved'') and subscribe to relevant topics. The Orchestrator manages a story-level queue for sequential story processing (one story at a time) and task-level queues enabling parallel processing of independent tasks within each story while respecting dependencies.
+\vspace*{-0.1cm}
+
+\section{Mandatory Workflow Diagram}
+
+\vspace*{-0.2cm}
+\lstset{
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  breakatwhitespace=false,
+  breakindent=0pt,
+  columns=fullflexible,
+  keepspaces=true
+}
+\begin{center}
+\begin{lstlisting}
++------------------------------+-------------------------------------+
+|                         INPUT: GitHub Repository                   |
+|          [Story 1, Story 2, Story 3, ...] (API / File Upload)      |
++------------------------------+-------------------------------------+
+                               |
+                               v
++------------------------------+-------------------------------------+
+|                   GITHUB CONNECTOR & PARSER                        |
+|  - Fetch repository files                                          |
+|  - Extract metadata + index in Supermemory                         |
+|  - Analyze project structure (languages, frameworks)               |
++------------------------------+-------------------------------------+
+                               |
+                               v
++--------------------------- PHASE 1 --------------------------------+
+|                    TASK DIVISION & RANKING                         |
+|                                                                    |
+|  Task Divider Agent                                                |
+|    -> Divide ALL stories into small tasks                          |
+|    -> Rank order of execution for all tasks                        |
+|       (e.g., FE, BE, DB, Auth, Tests, etc.)                        |
++------------------------------+-------------------------------------+
+                               |
++--------------------------- PHASE 2 --------------------------------+
+|                         TASK REVIEW                                |
+|                                                                    |
+|  Task Reviewer Agent (recursive)                                   |
+|    -> Review all tasks                                             |
+|    -> Validate subtasks                                            |
+|    -> Break down any complex task further                          |
+|       until "implementable" units                                  |
++------------------------------+-------------------------------------+
+                               |
+
++------------------------------+-------------------------------------+
+|                    TASK QUEUE (RANKED ORDER)                       |
+|   [ Task 1 (P1) ] --> [ Task 2 (P2) ] --> [ Task 3 (P3) ] ...      |
++------------------------------+-------------------------------------+
+                               |
+                         pick current task
+                               |
++--------------------------- PHASE 3 --------------------------------+
+|                       CODE GENERATION (PARALLEL)                   |
+|                                                                    |
+|    +----------------+    +----------------+    +----------------+  |
+|    | Frontend       |    | Backend        |    | Database       |  |
+|    | Code Gen Agent |    | Code Gen Agent |    | Code Gen Agent |  |
+|    +--------+-------+    +--------+-------+    +--------+-------+  |
+|             \                   |                    /             |
+|              \                  |                   /              |
+|               \                 |                  /               |
+|                +----------------------------------+                |
+|                |           Code Reviewer Agent    |                |
+|                |  - Style & quality checks        |                |
+|                |  - Security & best practices     |                |
+|                |  - Requirement adherence         |                |
+|                +----------------+-----------------+                |
+|                                 |                                  |
+|                    issues? yes  |  no                              |
+|                      +---------+---------+                         |
+|                      |                   |                         |
+|                send back for       proceed to tests                |
+|                  revision                                          |
++------------------------------+-------------------------------------+
+                               |
++--------------------------- PHASE 5 --------------------------------+
+|                            TESTING                                 |
+|                                                                    |
+|  Test Generator Agent                                              |
+|    -> Generate unit tests                                          |
+|    -> Generate integration tests                                   |
+|    -> Generate E2E tests                                           |
+|                                                                    |
+|  Test Reviewer & Executor Agent                                    |
+|    -> Review test coverage and relevance                           |
+|    -> Execute tests in isolated Docker environment                 |
+|    -> Collect results & coverage metrics                           |
+|                                                                    |
+|                tests failing?                                      |
+|                +------------+                                      |
+|              yes            no                                     |
+|                |            |                                      |
+|     send defects / feedback   proceed to integration & deploy      |
++------------------------------+-------------------------------------+
+                               |
++--------------------------- PHASE 6 --------------------------------+
+|                    INTEGRATION & DEPLOYMENT                        |
+|                                                                    |
+|  - Merge validated modules (FE, BE, DB)                            |
+|  - Run final integration tests                                     |
+|  - Deploy to staging (AWS)                                          |
+|  - Provision managed Postgres (Supabase / Neon)                    |
+|  - Generate Live Preview URL                                       |
+|  - Update dashboard with status, logs, test reports                |
++------------------------------+-------------------------------------+
+                               |
++------------------------------+-------------------------------------+
+|                        TASK COMPLETE ✓                             |
++------------------------------+-------------------------------------+
+                               |
++------------------------------+-------------------------------------+
+|              Next Task in Queue (Execute One by One)               |
++------------------------------+-------------------------------------+
+                               |
++------------------------------+-------------------------------------+
+|                  LIVE PREVIEW & OPERATIONS DASHBOARD               |
+|  - List of deployed stories and preview URLs                       |
+|  - In-browser code editor (Monaco)                                 |
+|  - Test and coverage reports                                       |
+|  - Agent activity and logs                                         |
++--------------------------------------------------------------------+
+\end{lstlisting}
+\end{center}
+
+\vspace*{-0.2cm}
+\noindent\textbf{Flow}: GitHub Input $\rightarrow$ GitHub Connector \& Parser $\rightarrow$ Task Division \& Ranking (All Stories) $\rightarrow$ Task Review $\rightarrow$ Task Execution (One by One) $\rightarrow$ Code Generation $\rightarrow$ Code Review $\rightarrow$ Test Generation \& Execution $\rightarrow$ Integration \& Deployment $\rightarrow$ Dashboard
+
+\section{Technical Stack}
+
+\subsection{Orchestration \& Backend}
+
+\begin{itemize}
+  \item \textbf{Runtime}: Bun (TypeScript).
+  \item \textbf{Framework}: Express.js (REST API).
+  \item \textbf{Message Bus}: Redis (pub/sub for agent communication).
+  \item \textbf{State Store}: PostgreSQL with Prisma ORM (task state, code artifacts, metadata).
+  \item \textbf{Auth}: Passport.js + GitHub OAuth.
+  \item \textbf{Memory}: Supermemory API (project context and semantic search).
+  \item \textbf{Containers}: Docker (dockerode) for isolated test execution.
+\end{itemize}
+
+\subsection{AI/ML Models}
+
+\begin{itemize}
+  \item \textbf{LLM Client}: OpenAI SDK (works with OpenRouter).
+  \item \textbf{Models}: GPT-4 Turbo (code generation), Claude 3 Sonnet (code review), GPT-3.5 Turbo (quick tasks).
+  \item \textbf{Rationale}: Cost optimization, fallback mechanisms, access to multiple models via OpenRouter.
+  \item \textbf{Context}: Supermemory for semantic project context retrieval.
+\end{itemize}
+
+\subsection{Frontend \& UI}
+
+\begin{itemize}
+  \item \textbf{Framework}: React 18 + TypeScript + Vite.
+  \item \textbf{UI Library}: Tailwind CSS + shadcn/ui + Lucide icons.
+  \item \textbf{Code Editor}: Monaco Editor (VS Code editor in browser).
+  \item \textbf{State Management}: Zustand.
+  \item \textbf{Animations}: Framer Motion.
+  \item \textbf{Drag \& Drop}: @dnd-kit for Kanban board.
+\end{itemize}
+
+\subsection{Generated Code Stack}
+
+\begin{itemize}
+  \item \textbf{Frontend}: React with TypeScript, Tailwind CSS.
+  \item \textbf{Backend}: Node.js (Express) or Python (FastAPI).
+  \item \textbf{Database}: PostgreSQL with Prisma ORM (Node.js) or SQLAlchemy (Python).
+  \item \textbf{Authentication}: JWT-based auth system.
+  \item \textbf{API}: RESTful API design.
+\end{itemize}
+
+\subsection{Testing \& Deployment}
+
+\begin{itemize}
+  \item \textbf{Test Frameworks}: Jest (JS/TS), pytest (Python), Playwright (E2E).
+  \item \textbf{Test Execution}: Isolated Docker containers per test suite.
+  \item \textbf{Deployment}: AWS (EC2/ECS for backend, S3/CloudFront for frontend, RDS for database).
+\end{itemize}
+
+\section{Data Privacy \& Security}
+
+\subsection{GitHub Data Handling}
+
+\begin{itemize}
+  \item \textbf{Authentication}: GitHub OAuth 2.0.
+  \item \textbf{Token Storage}: Encrypted tokens, never logged or exposed in API responses.
+  \item \textbf{Data Isolation}: Each user's projects are isolated (multi-tenancy).
+  \item \textbf{File Snapshots}: Pre-execution file states for rollback on failure.
+\end{itemize}
+
+\subsection{API Key Management}
+
+\begin{itemize}
+  \item \textbf{LLM API Keys}: Stored in environment variables (never in code).
+  \item \textbf{Production}: Secrets management service (AWS Secrets Manager / HashiCorp Vault).
+  \item \textbf{Development}: \texttt{.env} files (gitignored).
+  \item \textbf{Key Rotation}: Multiple keys with automatic failover.
+\end{itemize}
+
+\subsection{Generated Code Security}
+
+\begin{itemize}
+  \item \textbf{Code Scanning}: Automated security analysis before deployment.
+  \item \textbf{Dependency Check}: Snyk integration for vulnerability scanning.
+  \item \textbf{Secrets Detection}: Prevents hardcoded credentials in generated code.
+  \item \textbf{Input Validation}: All generated APIs include input sanitization.
+\end{itemize}
+
+\subsection{User Data Privacy}
+
+\begin{itemize}
+  \item \textbf{Data Isolation}: Each user's projects are isolated (multi-tenancy).
+  \item \textbf{GDPR Compliance}: User data export and deletion capabilities.
+  \item \textbf{Audit Logging}: All agent actions logged for traceability.
+  \item \textbf{Access Control}: Role-based access control (RBAC) for team members.
+\end{itemize}
+
+\subsection{Infrastructure Security}
+
+\begin{itemize}
+  \item \textbf{HTTPS}: All communications encrypted (TLS 1.3).
+  \item \textbf{CORS}: Strict CORS policies for API endpoints.
+  \item \textbf{Rate Limiting}: Prevent abuse and control costs.
+  \item \textbf{Input Sanitization}: All user inputs validated and sanitized.
+\end{itemize}
+
+\section{Anticipated Challenges \& Solutions}
+
+\subsection{Challenge 1: Agent Coordination \& Deadlock Prevention}
+
+\textbf{Problem}: Managing dependencies, preventing deadlocks, and handling agent failures without breaking the entire pipeline.
+
+\textbf{Solution}:
+
+\begin{itemize}
+  \item \textbf{Dependency Graph}: Task Prioritizer Agent creates a DAG (Directed Acyclic Graph) of task dependencies.
+  \item \textbf{Orchestrator with Deadlock Detection}: Central orchestrator monitors task states and detects circular dependencies.
+  \item \textbf{Timeout Mechanisms}: Each agent task has a timeout; if exceeded, the task is marked as failed and retried or reassigned.
+  \item \textbf{Failure Handling}: Retry logic with exponential backoff, fallback to alternative agents if primary agent fails, manual intervention queue for unresolvable issues.
+  \item \textbf{State Management}: Centralized state store (PostgreSQL) tracks all task states atomically.
+  \item \textbf{Implementation}: TypeScript orchestrator with Prisma for state management and dependency tracking, automatic retry with exponential backoff, circuit breaker pattern for agent health monitoring.
+\end{itemize}
+
+\subsection{Challenge 2: Cost Management \& LLM API Rate Limits}
+
+\textbf{Problem}: LLM API calls are expensive, and with multiple agents making concurrent calls, costs can escalate quickly. API rate limits might throttle agent execution.
+
+\textbf{Solution}:
+
+\begin{itemize}
+  \item \textbf{Model Selection Strategy}: Use cost-effective models (e.g., GPT-3.5) for simple tasks, GPT-4 for complex reasoning.
+  \item \textbf{Caching}: Cache similar prompts/responses to avoid redundant API calls.
+  \item \textbf{Batch Processing}: Group similar tasks to reduce API calls.
+  \item \textbf{Rate Limiting}: Implement token bucket algorithm to respect API limits.
+  \item \textbf{Cost Monitoring}: Real-time cost tracking dashboard with alerts.
+  \item \textbf{OpenRouter Benefits}: Leverage OpenRouter's aggregation to automatically switch providers if one is rate-limited.
+  \item \textbf{Implementation}: Redis caching layer for prompt/response pairs, custom rate limiter middleware, cost tracking in database with per-task attribution.
+\end{itemize}
+
+\end{document}
